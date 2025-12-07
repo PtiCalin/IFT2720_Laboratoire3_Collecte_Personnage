@@ -45,7 +45,7 @@ public class SceneSetup : MonoBehaviour
     private void SetupLighting()
     {
         // Chercher ou créer une lumière directionnelle (soleil)
-        Light directionalLight = FindObjectOfType<Light>();
+        Light directionalLight = FindFirstObjectByType<Light>();
 
         if (directionalLight == null)
         {
@@ -86,7 +86,7 @@ public class SceneSetup : MonoBehaviour
     /// </summary>
     private void SetupGameManager()
     {
-        GameManager gameManager = FindObjectOfType<GameManager>();
+        GameManager gameManager = FindFirstObjectByType<GameManager>();
 
         if (gameManager == null)
         {
