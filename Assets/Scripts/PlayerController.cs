@@ -1,3 +1,5 @@
+using UnityEngine;
+
 public class PlayerController : MonoBehaviour
 {
     // Paramètres de déplacement
