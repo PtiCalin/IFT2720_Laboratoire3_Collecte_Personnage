@@ -83,24 +83,60 @@ public class PlayerController : MonoBehaviour
         }
     }
     
+    // ==========================================
+    // MÉTHODES DE COLLISION
+    // ==========================================
+    // Les événements de collision sont utilisés lorsque vous avez besoin d'une réponse
+    // physique entre deux objets (par exemple, un personnage qui heurte un mur).
+    // Les deux objets doivent avoir des Colliders et au moins un doit avoir un Rigidbody.
+    
     /// <summary>
-    /// Vérification du Sol: Utilise OnCollisionEnter pour vérifier si le joueur touche le sol
-    /// permettant de sauter à nouveau
+    /// OnCollisionEnter : Appelée lorsqu'un objet entre en collision avec un autre.
+    /// C'est le point où deux objets commencent à se toucher.
+    /// Utilisé ici pour vérifier si le joueur touche le sol, permettant de sauter à nouveau.
     /// </summary>
-    /// <param name="collision">Information sur la collision détectée</param>
+    /// <param name="collision">Information sur la collision détectée, contient des données
+    /// sur l'objet touché, les points de contact, la force de l'impact, etc.</param>
     void OnCollisionEnter(Collision collision)
     {
         // Vérifier si le joueur touche le sol
-        // On utilise CompareTag pour une meilleure performance
+        // On utilise CompareTag pour une meilleure performance qu'une comparaison de chaîne
         if (collision.gameObject.CompareTag("Ground"))
         {
             // Le joueur est maintenant au sol et peut sauter
             isGrounded = true;
+            Debug.Log("Joueur a atterri sur le sol");
         }
     }
     
     /// <summary>
-    /// Détecte quand le joueur quitte une collision avec le sol
+    /// OnCollisionStay : Appelée chaque frame où un objet continue de toucher un autre objet.
+    /// Cette méthode est utile pour des effets continus pendant qu'une collision persiste,
+    /// comme prendre des dégâts en continu ou appliquer une force constante.
+    /// </summary>
+    /// <param name="collision">Information sur la collision en cours</param>
+    void OnCollisionStay(Collision collision)
+    {
+        // Exemple : Vous pourriez vérifier si le joueur reste sur une surface glissante
+        // ou une zone de dégâts qui inflige des dégâts continus
+        
+        // S'assurer que le joueur reste au sol même pendant le contact continu
+        if (collision.gameObject.CompareTag("Ground"))
+        {
+            isGrounded = true;
+        }
+        
+        // Exemple d'utilisation avec une zone de dégâts (à implémenter selon vos besoins)
+        // if (collision.gameObject.CompareTag("DamageZone"))
+        // {
+        //     TakeDamage(damagePerSecond * Time.deltaTime);
+        // }
+    }
+    
+    /// <summary>
+    /// OnCollisionExit : Appelée lorsqu'un objet cesse de toucher un autre objet.
+    /// Détecte quand le joueur quitte une collision, utilisé ici pour détecter
+    /// quand le joueur quitte le sol (saute ou tombe).
     /// </summary>
     /// <param name="collision">Information sur la collision quittée</param>
     void OnCollisionExit(Collision collision)
@@ -109,6 +145,7 @@ public class PlayerController : MonoBehaviour
         if (collision.gameObject.CompareTag("Ground"))
         {
             isGrounded = false;
+            Debug.Log("Joueur a quitté le sol");
         }
     }
 }
