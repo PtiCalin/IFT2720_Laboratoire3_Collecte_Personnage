@@ -2,8 +2,6 @@
 
 Tous les changements notables de ce projet seront documentés dans ce fichier.
 
-Le format est basé sur [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-et ce projet adhère au [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
@@ -17,9 +15,56 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
-## [2.0.0] - 2024-12-07
+## [3.0.0]
 
-### 🎉 Améliorations Majeures du Rigidbody
+### 📚 Documentation & Setup
+
+#### Ajouté
+- **Ground Detection Implementation** (OnCollisionEnter):
+  - Explication complète du concept de détection du sol
+  - Implémentation avec OnCollisionEnter/OnCollisionExit
+  - Utilisation de CompareTag() pour performance
+  - Problèmes courants et solutions
+  - Optimisations avec Raycast
+  - Comparaison avec OnCollisionStay
+  - Code complet commenté en français
+
+- **Character & Environment Setup**:
+  - Guide complet de création du Player GameObject (Capsule + Rigidbody + Scripts)
+  - Configuration des tags et layers
+  - Setup des collectibles (pièces vs trésors)
+  - Création de l'environnement (sol, plateformes, murs)
+  - Configuration de la caméra et de l'UI TextMeshPro
+  - Checklist complète de test
+  - Organisation des matériaux et des paramètres
+
+- **Prefab System**:
+  - Structure de prefabs organisée (Player, Coin, Treasure, Platform)
+  - Hiérarchie d'assets recommandée
+  - Réutilisabilité des composants
+  - Configuration recommandée pour chaque type
+
+- **Practical Jump Examples** (5 implémentations):
+  - Saut simple (base absolue avec AddForce)
+  - Double saut (système de sauts multiples)
+  - Saut diagonal (combinaison de vecteurs)
+  - Saut ajustable (hauteur variable)
+  - Push force (explosion/poussée)
+  - Visualisations ASCII et code complet commenté
+
+#### Documentation Consolidée
+Toute la documentation complète est disponible dans README.md avec:
+- Guide physique Rigidbody complet
+- Exemples pratiques de sauts
+- Guide de setup des GameObjects
+- Instructions détaillées du laboratoire
+- Troubleshooting et solutions
+
+---
+
+## [2.0.0]
+
+### 🎉 Rigidbody
 
 #### Ajouté
 - **Double Jump System**: Support pour sauts multiples configurables
@@ -70,25 +115,9 @@ Visual Feedback:
 - `Vector3 GetVelocity()` - Obtenir la vélocité actuelle du Rigidbody
 - `Vector3 GetLastGroundedPosition()` - Obtenir la dernière position au sol
 
-### 📚 Documentation
-
-#### Ajouté
-- **README.md** complet avec:
-  - Description détaillée du projet
-  - Instructions d'installation
-  - Guide de jeu avec contrôles
-  - Architecture du projet
-  - Documentation des scripts
-  - Configuration des paramètres
-  - Guide de contribution
-- **LICENSE** (MIT License)
-- **CHANGELOG.md** (ce fichier)
-- **Pull Request Template** (`.github/pull_request_template.md`)
-- Badges pour Unity version, licence, et plateformes
-
 ---
 
-## [1.0.0] - 2024-12-01
+## [1.0.0]
 
 ### 🎮 Version Initiale
 
