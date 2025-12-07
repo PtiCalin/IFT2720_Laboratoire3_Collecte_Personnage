@@ -15,10 +15,13 @@ Un projet de jeu 3D développé avec Unity, explorant les mécaniques de physiqu
 - [Installation](#installation)
 - [Comment Jouer](#comment-jouer)
 - [Architecture du Projet](#architecture-du-projet)
+- [Structure de la Scène](#structure-de-la-scène)
+- [Bibliothèque de Prefabs](#bibliothèque-de-prefabs)
 - [Scripts Principaux](#scripts-principaux)
 - [Configuration](#configuration)
 - [Technologies Utilisées](#technologies-utilisées)
 - [Développement](#développement)
+- [Crédits des Assets & Algorithmes](#crédits-des-assets--algorithmes)
 - [Contributeurs](#contributeurs)
 - [Licence](#licence)
 
@@ -44,42 +47,10 @@ Le laboratoire met l'accent sur la compréhension et l'application pratique des 
 ### Objectifs Pédagogiques Principaux
 
 1. **Maîtrise du Rigidbody**
-   - Comprendre les propriétés du Rigidbody (masse, drag, gravité)
-   - Appliquer des forces et impulses pour le mouvement
-   - Configurer l'interpolation et la détection de collision
-   - Implémenter des contraintes de rotation et de position
-
 2. **Contrôle de Personnage Basé sur la Physique**
-   - Créer un mouvement fluide et réactif avec AddForce
-   - Gérer le saut avec des impulses verticales
-   - Implémenter un système de détection du sol robuste
-   - Optimiser le drag pour différents états (sol/air)
-
 3. **Système de Collecte Interactif**
-   - Configurer des Colliders en mode Trigger
-   - Détecter les collisions entre joueur et objets collectibles
-   - Gérer la destruction d'objets et la mise à jour du score
-   - Animer les collectibles pour améliorer l'expérience
-
 4. **Architecture et Gestion d'État**
-   - Implémenter le pattern Singleton pour le GameManager
-   - Séparer les responsabilités entre différents scripts
-   - Gérer la communication entre composants
-   - Maintenir un code propre et bien structuré
-
 5. **Intégration UI**
-   - Utiliser TextMeshPro pour l'affichage
-   - Mettre à jour dynamiquement les compteurs
-   - Créer une interface informative et claire
-
-### Compétences Développées
-
-- ✅ Configuration et manipulation de composants physiques Unity
-- ✅ Programmation orientée objet en C#
-- ✅ Debug et optimisation de systèmes physiques
-- ✅ Utilisation de SerializeField et l'Inspector Unity
-- ✅ Gestion d'événements et callbacks Unity (OnTriggerEnter)
-- ✅ Implémentation de patterns de design (Singleton)
 
 ## ✨ Fonctionnalités Implémentées
 
@@ -94,7 +65,7 @@ Le laboratoire met l'accent sur la compréhension et l'application pratique des 
 - 🎯 **Détection de sol précise** avec raycast configurable
 - 🔄 **Rotation visuelle** du personnage selon la direction du mouvement
 
-#### Mécaniques de Saut Avancées
+#### Mécaniques de Saut
 - 🦘 **Saut basique** avec force d'impulsion configurable
 - 🎯 **Double saut** avec support multi-sauts configurable (extension)
 - 🕐 **Coyote Time** - permet de sauter brièvement après avoir quitté le sol (extension)
@@ -271,6 +242,30 @@ IFT2720_Laboratoire3_Collecte_Personnage/
     └── pull_request_template.md       # Template pour les PR
 ```
 
+## 🗺️ Structure de la Scène
+
+Le niveau principal (`JeuCollecte.unity`) est généré dynamiquement par `LevelGenerator`. Au démarrage, un GameObject parent **Generated Level** organise les éléments suivants :
+
+- `Ground` : plane mis à l'échelle (`groundScale`) et taggé `Ground` pour la détection du sol.
+- `Maze` : conteneur des murs extérieurs et intérieurs ; l'algorithme de backtracking produit un tracé unique à chaque exécution en fonction de `mazeRows`, `mazeColumns` et `cellSize`.
+- `Collectibles` : pièces et trésors instanciés aléatoirement avec leurs valeurs configurées.
+- `Player` : instancié depuis `playerPrefab` si présent, sinon un GameObject vide est préparé. La cellule `playerStartCell` garantit un point d'apparition dégagé des murs.
+- `GameManager`, `Main Camera`, `Directional Light` : peuvent être placés manuellement ou laissés à `SceneSetup` pour une configuration automatique.
+
+### Réglages clés
+
+- **Dimensions** : ajustez `mazeRows`, `mazeColumns` et `cellSize` pour moduler la complexité du labyrinthe.
+- **Apparition du joueur** : `playerStartCell` choisit la cellule de départ, tandis que `playerStartPosition.y` fixe la hauteur initiale.
+- **Collectibles** : `numberOfCoins`, `numberOfTreasures` et leurs valeurs contrôlent la densité de l'objectif de collecte.
+
+## 🧱 Bibliothèque de Prefabs
+
+Le dossier `Assets/Prefabs` regroupe les éléments réutilisables :
+
+- **Player** : assignez votre personnage à `LevelGenerator.playerPrefab` en veillant à inclure `Rigidbody`, un collider et `PlayerController` si nécessaire.
+- **Collectibles** : préparez des prefabs pour les pièces et trésors avec `Collectible` et un collider en mode `isTrigger`.
+- **Environnement** : conservez plans, plateformes ou variantes de décor pour enrichir rapidement de nouvelles scènes.
+
 ## 🔧 Scripts Principaux
 
 ### PlayerController.cs
@@ -384,13 +379,6 @@ Dans Unity, sélectionnez le GameObject du joueur et ajustez les paramètres dan
 
 ### Structure du Code
 
-Le projet suit les bonnes pratiques Unity :
-- Séparation des préoccupations
-- Pattern Singleton pour le GameManager
-- SerializeField pour l'exposition dans l'Inspector
-- Commentaires clairs et documentation
-- Gizmos pour le debugging visuel
-
 ### Ajouter un Nouveau Type de Collectible
 
 1. Dupliquez un collectible existant dans la scène
@@ -413,9 +401,21 @@ Pour changer les contrôles, modifiez les inputs dans `PlayerController.cs` :
 - Les **Debug.Log** montrent les événements importants (sauts, collectes)
 - Utilisez le **profiler Unity** pour optimiser les performances
 
-## 🤝 Contributeurs
+## 🎨 Crédits des Assets & Algorithmes
 
-- **Développeur Principal** - [PtiCalin](https://github.com/PtiCalin)
+| Asset | Auteur | Licence | Emplacement | Notes |
+|-------|--------|---------|-------------|-------|
+| [Low Poly 3D Treasure Items Game Assets](https://mehrasaur.itch.io/treasure-pack) | [mehrasaur](https://mehrasaur.itch.io/) | [CC0](https://creativecommons.org/publicdomain/zero/1.0/) | `Assets/Models/Collectibles` | Modèles FBX de pièces, trésors, gemmes et coffres. Matériaux à créer dans Unity. |
+| Character Model (Visual Novel Series) | [styloo](https://styloo.itch.io/) | [CC0](https://creativecommons.org/publicdomain/zero/1.0/) | `Assets/Models/Characters` | Ressource publiée le 23 oct. 2024 (maj 22 avr. 2025). Note moyenne 4.9/5 (14 avis). Compatible Unity/Unreal/Godot. |
+
+### Algorithmes & Inspirations
+
+- Génération de labyrinthe : implémentation basée sur l'algorithme « Recursive Backtracker » (parcours en profondeur) popularisé par [Jamis Buck, *Maze Generation: Recursive Backtracking* (2010)](https://weblog.jamisbuck.org/2010/12/27/maze-generation-recursive-backtracking).
+- Exemple d'implémentation de référence : [Jamis Buck, *recursive-backtracker.rb* gist](https://gist.github.com/jamis/756896), utilisé comme guide pour structurer la génération procédurale.
+
+## 👥 Contributeurs
+
+- **Développeur Principal** — Charlie Bouchard AKA [PtiCalin](https://github.com/PtiCalin)
 
 ### Comment Contribuer
 
@@ -425,41 +425,18 @@ Pour changer les contrôles, modifiez les inputs dans `PlayerController.cs` :
 4. Poussez vers la branche (`git push origin feature/AmazingFeature`)
 5. Ouvrez une Pull Request (utilisez le template fourni)
 
-## 🎨 Assets & Credits
-
-### 3D Models
-
-**Low Poly 3D Treasure Items Game Assets**
-- **Author:** [mehrasaur](https://mehrasaur.itch.io/)
-- **Source:** [itch.io](https://mehrasaur.itch.io/treasure-pack)
-- **License:** CC0 (Public Domain)
-- **Published:** January 18, 2018
-- **Updated:** March 04, 2018
-- **Contents:** Chests, coins, gems (cut & uncut), keys, medals, and other treasure items
-- **Formats:** .blend, .obj + .mtl, .fbx
-- **Tags:** 3D, chest, coin, gem, Loot, Low-poly, treasure
-- **Rating:** ⭐⭐⭐⭐⭐ (5.0/5 - 2 ratings)
-
-These beautiful low-poly treasure models are used as collectibles throughout the game. The assets are provided without materials and are located in `Assets/Models/Collectibles/`.
-
 ## 📄 Licence
 
 Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de détails.
 
 ---
 
-## 📞 Support
-
-Pour toute question ou problème :
-- Ouvrez une [Issue](https://github.com/PtiCalin/IFT2720_Laboratoire3_Collecte_Personnage/issues)
-- Contactez l'équipe de développement
-
 ## 🎓 Informations Académiques
 
 **Cours :** IFT2720 - Introduction au Multimédia  
 **Institution :** Université de Montréal  
 **Laboratoire :** #3 - Collecte de Personnage  
-**Année Académique :** 2024-2025  
+**Trimestre :** Automne 2025  
 **Professeur :** Lazhar Khelifi (lazhar.khelifi@umontreal.ca)  
 **Objectif :** Maîtriser Unity Physics (Rigidbody) et créer un système de gameplay avec collecte d'objets
 

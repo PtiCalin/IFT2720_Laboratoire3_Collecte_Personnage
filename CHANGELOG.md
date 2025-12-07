@@ -15,6 +15,29 @@ Tous les changements notables de ce projet seront documentés dans ce fichier.
 
 ---
 
+## [4.0.0] - 2025-12-07
+
+### ✅ Ajouté
+- Génération procédurale du labyrinthe via un algorithme de **recursive backtracking** inspiré des travaux de Jamis Buck, avec paramètres exposés (`mazeRows`, `mazeColumns`, `cellSize`).
+- Support d'un **prefab de personnage** configurable depuis l'Inspector (`playerPrefab`) pour remplacer dynamiquement le placeholder.
+- Nouveau champ `playerStartCell` afin de garantir un point de spawn libre dans la grille générée.
+
+### 🔄 Modifié
+- Le personnage de secours est désormais un **GameObject vide** (au lieu d'une capsule) auquel les composants nécessaires sont ajoutés à l'exécution.
+- Alignement du spawn joueur sur la cellule calculée par le générateur pour éviter toute intersection avec les murs.
+- Ajustement du placement aléatoire des collectibles pour utiliser les dimensions actuelles du labyrinthe généré.
+- Nettoyage du script `PlayerController` en supprimant les commentaires verbeux pour une lecture plus directe.
+
+### 🗑️ Supprimé
+- Suppression des fichiers `SAMPLE_SCENE_GUIDE.md`, `README_PREFABS.md` et `Assets/Models/Collectibles/README.md` (ainsi que leurs `.meta`) devenus redondants.
+
+### 📝 Documentation
+- Réorganisation complète du `README.md` : fusion des guides de scène, de prefabs et des licences d'assets dans un seul document.
+- Ajout des crédits détaillés pour le modèle de personnage de **styloo** et pour l'implémentation de labyrinthe basée sur le gist `recursive-backtracker.rb`.
+- Mise à jour de la table des matières avec les nouvelles sections « Structure de la Scène », « Bibliothèque de Prefabs » et « Crédits des Assets & Algorithmes ».
+
+---
+
 ## [3.0.0]
 
 ### 📚 Documentation & Setup
