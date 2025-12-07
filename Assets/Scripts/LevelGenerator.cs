@@ -130,8 +130,8 @@ public class LevelGenerator : MonoBehaviour
         // Ajouter un Rigidbody pour la physique
         Rigidbody rb = player.AddComponent<Rigidbody>();
         rb.mass = 1f;
-        rb.drag = 0f;
-        rb.angularDrag = 0.05f;
+        rb.linearDamping = 0f;
+        rb.angularDamping = 0.05f;
         rb.useGravity = true;
         
         // Geler les rotations pour éviter que le joueur bascule
