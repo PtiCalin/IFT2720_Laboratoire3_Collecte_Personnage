@@ -16,6 +16,7 @@ public class LevelGenerator : MonoBehaviour
     [SerializeField] private Vector3 playerStartPosition = new Vector3(0, 2, 0);
     [SerializeField] private float playerMoveSpeed = 5f;
     [SerializeField] private float playerJumpForce = 5f;
+    [SerializeField] private GameObject playerPrefab;
     
     [Header("Configuration des Collectibles")]
     [SerializeField] private int numberOfCoins = 10;
@@ -120,35 +121,69 @@ public class LevelGenerator : MonoBehaviour
     /// </summary>
     private void CreatePlayer()
     {
-        // Créer une capsule pour le joueur
-        player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-        player.name = "Player";
+        if (playerPrefab != null)
+        {
+            player = Instantiate(playerPrefab, playerStartPosition, Quaternion.identity, levelParent.transform);
+            player.name = "Player";
+        }
+        else
+        {
+            // Créer une capsule pour le joueur lorsque aucun modèle n'est fourni
+            player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            player.name = "Player";
+            player.transform.SetParent(levelParent.transform, true);
+
+            // Appliquer le matériau si disponible uniquement pour le maillage généré
+            if (playerMaterial != null)
+            {
+                Renderer generatedRenderer = player.GetComponent<Renderer>();
+                if (generatedRenderer != null)
+                {
+                    generatedRenderer.material = playerMaterial;
+                }
+            }
+        }
+
         player.tag = "Player";
         player.transform.position = playerStartPosition;
-        player.transform.parent = levelParent.transform;
-        
-        // Ajouter un Rigidbody pour la physique
-        Rigidbody rb = player.AddComponent<Rigidbody>();
-        rb.mass = 1f;
-        rb.linearDamping = 0f;
-        rb.angularDamping = 0.05f;
+        if (player.transform.parent != levelParent.transform)
+        {
+            player.transform.SetParent(levelParent.transform, true);
+        }
+
+        // S'assurer qu'un Rigidbody est présent et configuré
+        Rigidbody rb = player.GetComponent<Rigidbody>();
+        if (rb == null)
+        {
+            rb = player.AddComponent<Rigidbody>();
+            rb.mass = 1f;
+            rb.linearDamping = 0f;
+            rb.angularDamping = 0.05f;
+        }
         rb.useGravity = true;
-        
-        // Geler les rotations pour éviter que le joueur bascule
         rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
-        
-        // Ajouter le script PlayerController
-        PlayerController playerController = player.AddComponent<PlayerController>();
+
+        // Garantir la présence d'un collider utilisable pour la physique
+        Collider existingCollider = player.GetComponentInChildren<Collider>();
+        if (existingCollider == null)
+        {
+            player.AddComponent<CapsuleCollider>();
+        }
+        else if (existingCollider.isTrigger)
+        {
+            existingCollider.isTrigger = false;
+        }
+
+        // Ajouter ou configurer le script PlayerController
+        PlayerController playerController = player.GetComponent<PlayerController>();
+        if (playerController == null)
+        {
+            playerController = player.AddComponent<PlayerController>();
+        }
         playerController.moveSpeed = playerMoveSpeed;
         playerController.jumpForce = playerJumpForce;
-        
-        // Appliquer le matériau si disponible
-        if (playerMaterial != null)
-        {
-            player.GetComponent<Renderer>().material = playerMaterial;
-        }
-        
-        Debug.Log("Joueur créé à la position: " + playerStartPosition);
+
+        Debug.Log("Joueur créé à la position: " + playerStartPosition + (playerPrefab != null ? " avec le modèle fourni." : " via une capsule par défaut."));
     }
 
     /// <summary>
