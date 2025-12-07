@@ -1,2 +1,16 @@
 fileFormatVersion: 2
 guid: 0d08087dc5195d94aa0e8d1888886abd
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - groundMaterial: {fileID: 2100000, guid: 6f698307a2419b44ca72e62b3c72de08, type: 2}
+  - wallMaterial: {instanceID: 0}
+  - coinMaterial: {instanceID: 0}
+  - treasureMaterial: {instanceID: 0}
+  - playerMaterial: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
