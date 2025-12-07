@@ -1,15 +1,17 @@
-# 🎮 Laboratoire 3 - Collecte de Personnage
+# 🎮 Laboratoire 3 - Collecte de Personnage avec Physique Unity
 
 [![Unity Version](https://img.shields.io/badge/Unity-2022.3%2B-blue.svg)](https://unity.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Mac%20%7C%20Linux-lightgrey.svg)](https://unity.com/)
+[![Course](https://img.shields.io/badge/Course-IFT2720-purple.svg)](https://admission.umontreal.ca/cours-et-horaires/cours/ift-2720/)
 
-Un jeu de plateforme 2D/3D développé avec Unity, mettant en œuvre des mécaniques de physique avancées avec Rigidbody et un système de collecte d'objets.
+Un projet de jeu 3D développé avec Unity, explorant les mécaniques de physique avancées avec **Rigidbody**, le contrôle de personnage basé sur les forces physiques, et l'implémentation d'un système de collecte d'objets interactifs.
 
 ## 📋 Table des Matières
 
 - [Aperçu](#aperçu)
-- [Fonctionnalités](#fonctionnalités)
+- [Objectifs du Laboratoire](#objectifs-du-laboratoire)
+- [Fonctionnalités Implémentées](#fonctionnalités-implémentées)
 - [Installation](#installation)
 - [Comment Jouer](#comment-jouer)
 - [Architecture du Projet](#architecture-du-projet)
@@ -22,50 +24,171 @@ Un jeu de plateforme 2D/3D développé avec Unity, mettant en œuvre des mécani
 
 ## 🎯 Aperçu
 
-Ce projet est un laboratoire académique (IFT2720) qui explore les concepts de physique Unity, de contrôle de personnage basé sur Rigidbody, et de système de collecte d'objets. Le joueur contrôle un personnage qui peut se déplacer, sauter, et collecter des pièces et des trésors dans l'environnement.
+Ce projet constitue le **Laboratoire 3** du cours **IFT2720 - Introduction au Multimédia** à l'Université de Montréal. Il s'agit d'une exploration approfondie des systèmes de physique Unity et de l'implémentation d'un contrôleur de personnage 3D utilisant exclusivement le composant **Rigidbody** pour le mouvement et les interactions.
 
-### Objectifs Pédagogiques
+Le laboratoire met l'accent sur la compréhension et l'application pratique des concepts suivants :
+- **Physique Unity** : Utilisation du moteur physique pour créer des mouvements réalistes
+- **Rigidbody Controller** : Contrôle de personnage basé sur les forces et vélocités
+- **Système de Collecte** : Détection de collisions et interactions avec des objets
+- **Game Management** : Architecture singleton et gestion d'état global
+- **UI Dynamique** : Mise à jour en temps réel de l'interface utilisateur
 
-- Maîtriser le système de physique Unity (Rigidbody)
-- Implémenter un contrôleur de personnage responsive
-- Créer un système de collecte d'objets
-- Gérer l'état du jeu avec un GameManager
-- Appliquer les bonnes pratiques de programmation Unity
+### Contexte Académique
 
-## ✨ Fonctionnalités
+**Cours :** IFT2720 - Introduction au Multimédia  
+**Laboratoire :** #3 - Collecte de Personnage  
+**Objectif Principal :** Maîtriser les composants physiques Unity (Rigidbody, Collider, Forces) et créer un système de gameplay interactif complet.
 
-### Contrôle du Personnage
+## 🎓 Objectifs du Laboratoire
 
-- ⚡ **Mouvement fluide** avec système d'accélération
-- 🦘 **Double saut** avec support multi-sauts configurable
-- 🕐 **Coyote Time** - permet de sauter brièvement après avoir quitté le sol
-- 📦 **Jump Buffering** - mémorise l'input de saut pour une réponse plus fluide
-- 📏 **Hauteur de saut variable** - relâcher l'espace tôt pour des sauts plus courts
-- 🌪️ **Contrôle aérien réduit** pour un gameplay plus réaliste
+### Objectifs Pédagogiques Principaux
+
+1. **Maîtrise du Rigidbody**
+   - Comprendre les propriétés du Rigidbody (masse, drag, gravité)
+   - Appliquer des forces et impulses pour le mouvement
+   - Configurer l'interpolation et la détection de collision
+   - Implémenter des contraintes de rotation et de position
+
+2. **Contrôle de Personnage Basé sur la Physique**
+   - Créer un mouvement fluide et réactif avec AddForce
+   - Gérer le saut avec des impulses verticales
+   - Implémenter un système de détection du sol robuste
+   - Optimiser le drag pour différents états (sol/air)
+
+3. **Système de Collecte Interactif**
+   - Configurer des Colliders en mode Trigger
+   - Détecter les collisions entre joueur et objets collectibles
+   - Gérer la destruction d'objets et la mise à jour du score
+   - Animer les collectibles pour améliorer l'expérience
+
+4. **Architecture et Gestion d'État**
+   - Implémenter le pattern Singleton pour le GameManager
+   - Séparer les responsabilités entre différents scripts
+   - Gérer la communication entre composants
+   - Maintenir un code propre et bien structuré
+
+5. **Intégration UI**
+   - Utiliser TextMeshPro pour l'affichage
+   - Mettre à jour dynamiquement les compteurs
+   - Créer une interface informative et claire
+
+### Compétences Développées
+
+- ✅ Configuration et manipulation de composants physiques Unity
+- ✅ Programmation orientée objet en C#
+- ✅ Debug et optimisation de systèmes physiques
+- ✅ Utilisation de SerializeField et l'Inspector Unity
+- ✅ Gestion d'événements et callbacks Unity (OnTriggerEnter)
+- ✅ Implémentation de patterns de design (Singleton)
+
+## ✨ Fonctionnalités Implémentées
+
+### Partie 1 : Contrôle du Personnage avec Rigidbody
+
+#### Mouvement Physique Réaliste
+
+- ⚡ **Mouvement horizontal fluide** avec système d'accélération progressive
+- 🎯 **Vitesse maximale limitée** pour un contrôle prévisible
+- 🏃 **Accélération configurable** pour ajuster la réactivité
+- 🌪️ **Contrôle aérien réduit** - facteur de contrôle en l'air (50% par défaut)
 - 🎯 **Détection de sol précise** avec raycast configurable
 - 🔄 **Rotation visuelle** du personnage selon la direction du mouvement
 
-### Système de Collecte
+#### Mécaniques de Saut Avancées
+- 🦘 **Saut basique** avec force d'impulsion configurable
+- 🎯 **Double saut** avec support multi-sauts configurable (extension)
+- 🕐 **Coyote Time** - permet de sauter brièvement après avoir quitté le sol (extension)
+- 📦 **Jump Buffering** - mémorise l'input de saut pour une réponse plus fluide (extension)
+- 📏 **Hauteur de saut variable** - relâcher l'espace tôt pour des sauts plus courts (extension)
 
-- 💰 **Pièces** - objets de base avec animation de rotation et flottement
-- 💎 **Trésors** - objets spéciaux avec valeur en points plus élevée
+### Partie 1 : Système de Collecte d'Objets
+
+#### Collectibles Interactifs
+- 💰 **Pièces (Coins)** - objets de base avec animation de rotation et flottement
+- 💎 **Trésors (Treasures)** - objets spéciaux avec valeur en points plus élevée
+- 🎨 **Animations procédurales** - rotation continue et mouvement sinusoïdal
+- ✅ **Détection par Trigger** - collision précise sans impact physique
+- 💥 **Effet de collecte** - destruction instantanée de l'objet et feedback visuel
+
+#### Gestion du Score
 - 📊 **Suivi des scores** - compteurs séparés pour pièces et trésors
-- 🎨 **Animations** - rotation et mouvement sinusoïdal pour tous les collectibles
-- ✅ **Détection par trigger** - collision précise avec le joueur
+- 🔢 **Points configurables** - valeur assignable par type d'objet
+- 📈 **Affichage temps réel** - mise à jour immédiate de l'UI
+- 🎯 **GameManager Singleton** - gestion centralisée du score global
 
-### Interface Utilisateur
+### Optimisations et Améliorations Techniques
 
-- 📈 **Affichage des scores** en temps réel
-- 🎯 **TextMeshPro** pour un rendu de texte de haute qualité
-- 🔄 **Mise à jour automatique** lors de la collecte
+#### Configuration Rigidbody Optimale
+- 🎮 **Interpolation** - mouvement fluide entre les frames physiques
+- 🔍 **Collision Detection Continue** - prévention du tunneling à haute vitesse
+- 🔒 **Contraintes de Rotation** - empêche les rotations indésirables sur les axes X et Z
+- ⚙️ **Configuration automatique** - setup optimal au démarrage du script
 
-### Optimisations Physiques
+#### Physique Améliorée
+- ⚖️ **Multiplicateur de gravité** - gravité accrue en chute pour un meilleur feeling (1.5x)
+- 🛑 **Limitation de vitesse de chute** - prévention des bugs de collision à haute vitesse
+- 🌪️ **Facteur de contrôle aérien** - contrôle réduit en l'air pour plus de réalisme (50%)
+- 📐 **Drag dynamique** - résistance différente au sol (5.0) et en l'air (2.0)
 
-- 🎮 **Interpolation** pour un mouvement fluide
-- 🔍 **Collision continue** pour une détection précise
-- 🔒 **Rotation figée** pour éviter les rotations indésirables
-- ⚖️ **Multiplicateur de gravité** pour un meilleur feeling de saut
-- 🛑 **Limitation de vitesse de chute** pour éviter les bugs
+#### Outils de Développement
+- 🔧 **Debug Gizmos** - visualisation de la détection du sol en mode Scene (ligne rouge)
+- 📝 **Logs informatifs** - feedback console sur les actions importantes (sauts, collectes)
+- 🎛️ **Paramètres exposés** - tous les réglages accessibles via l'Inspector Unity
+- 📊 **Headers organisés** - interface Inspector claire avec sections (Movement, Advanced, Ground Check, etc.)
+
+## 🎮 Exigences du Laboratoire
+
+### Critères d'Évaluation (Conformité au TP)
+
+Le projet répond aux exigences suivantes du Laboratoire 3 :
+
+✅ **Contrôle de Personnage avec Rigidbody**
+- ✓ Mouvement horizontal fluide utilisant des forces physiques
+- ✓ Saut vertical avec impulsion (AddForce en mode Impulse)
+- ✓ Détection du sol fonctionnelle avec Raycast
+- ✓ Gestion appropriée du drag (différent au sol et en l'air)
+- ✓ Configuration optimale du Rigidbody (interpolation, collision continue)
+
+✅ **Système de Collecte d'Objets**
+- ✓ Objets collectibles avec Colliders configurés en mode Trigger
+- ✓ Détection de collision avec le joueur (OnTriggerEnter)
+- ✓ Destruction des objets à la collecte (Destroy)
+- ✓ Attribution de points selon le type d'objet
+- ✓ Animations visuelles des collectibles (rotation, flottement)
+
+✅ **GameManager et Architecture**
+- ✓ Pattern Singleton correctement implémenté
+- ✓ Gestion centralisée du score global
+- ✓ Communication efficace avec les autres scripts
+- ✓ Méthodes publiques pour ajouter des points
+- ✓ Getters pour consulter les scores
+
+✅ **Interface Utilisateur**
+- ✓ Affichage des scores avec TextMeshPro
+- ✓ Mise à jour dynamique en temps réel
+- ✓ Compteurs séparés pour différents types d'objets
+- ✓ Interface claire et lisible
+
+✅ **Qualité du Code et Bonnes Pratiques**
+- ✓ Code bien structuré et commenté en anglais
+- ✓ Utilisation appropriée de SerializeField
+- ✓ Séparation claire des responsabilités entre scripts
+- ✓ Headers pour organiser les paramètres dans l'Inspector
+- ✓ Nommage cohérent et descriptif des variables
+
+### Extensions et Améliorations (Au-delà des Exigences)
+
+Le projet inclut également des fonctionnalités avancées :
+
+🌟 **Double Jump System** - Permet plusieurs sauts consécutifs  
+🌟 **Coyote Time** - Fenêtre de tolérance pour sauter après avoir quitté le sol  
+🌟 **Jump Buffering** - Mémorisation de l'input de saut pour meilleure réactivité  
+🌟 **Variable Jump Height** - Hauteur de saut modulable selon la durée de pression  
+🌟 **Smooth Acceleration** - Accélération progressive au lieu de vitesse instantanée  
+🌟 **Visual Rotation** - Rotation du modèle selon la direction du mouvement  
+🌟 **Enhanced Gravity** - Gravité modifiée en chute pour meilleur feeling  
+🌟 **Ground Check Point** - Point de vérification configurable  
+🌟 **Debug Visualization** - Gizmos pour faciliter le développement
 
 ## 🚀 Installation
 
@@ -314,12 +437,30 @@ Pour toute question ou problème :
 - Ouvrez une [Issue](https://github.com/PtiCalin/IFT2720_Laboratoire3_Collecte_Personnage/issues)
 - Contactez l'équipe de développement
 
-## 🎓 Contexte Académique
+## 🎓 Informations Académiques
 
-**Cours:** IFT2720 - Laboratoire 3  
-**Institution:** [Votre Institution]  
-**Année Académique:** 2024-2025  
-**Objectif:** Apprentissage de Unity Physics et des systèmes de gameplay
+**Cours :** IFT2720 - Introduction au Multimédia  
+**Institution :** Université de Montréal  
+**Laboratoire :** #3 - Collecte de Personnage  
+**Année Académique :** 2024-2025  
+**Professeur :** Lazhar Khelifi (lazhar.khelifi@umontreal.ca)  
+**Objectif :** Maîtriser Unity Physics (Rigidbody) et créer un système de gameplay avec collecte d'objets
+
+### Parties du Laboratoire
+
+Ce laboratoire se compose de deux parties distinctes :
+
+**Partie 1 - Contrôle du Personnage et Collecte (Ce Projet)**
+- Implémentation d'un contrôleur Rigidbody avec physique réaliste
+- Système de collecte d'objets (pièces et trésors)
+- Détection du sol et mécaniques de saut avancées
+- Interface utilisateur avec compteurs de score
+
+**Partie 2 - Navigation IA avec NavMesh (Annexe Séparée)**
+- Implémentation d'agents IA avec NavMesh
+- Pathfinding et navigation automatique
+- Comportements d'IA (patrouille, poursuite)
+- Intégration IA-Joueur dans l'environnement
 
 ---
 
