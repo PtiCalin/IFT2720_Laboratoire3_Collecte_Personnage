@@ -18,6 +18,7 @@ public class LevelGenerator : MonoBehaviour
     [SerializeField] private float playerMoveSpeed = 5f;
     [SerializeField] private float playerJumpForce = 5f;
     [SerializeField] private GameObject playerPrefab;
+    [SerializeField] private Vector2Int playerStartCell = Vector2Int.zero;
     
     [Header("Configuration des Collectibles")]
     [SerializeField] private int numberOfCoins = 10;
@@ -37,10 +38,16 @@ public class LevelGenerator : MonoBehaviour
     [SerializeField] private Material wallMaterial;
     [SerializeField] private Material coinMaterial;
     [SerializeField] private Material treasureMaterial;
-    [SerializeField] private Material playerMaterial;
 
     private GameObject player;
     private GameObject levelParent;
+    private bool[,,] mazeLayout;
+    private int cachedRows;
+    private int cachedColumns;
+    private float cachedSpacing;
+    private float cachedCellHalf;
+    private float cachedOffsetX;
+    private float cachedOffsetZ;
 
     private enum MazeDirection
     {
@@ -98,7 +105,10 @@ public class LevelGenerator : MonoBehaviour
         GameObject mazeParent = new GameObject("Maze");
         mazeParent.transform.SetParent(levelParent.transform, true);
 
-        bool[,,] mazeLayout = GenerateMazeLayout(rows, columns);
+        cachedRows = rows;
+        cachedColumns = columns;
+        cachedSpacing = spacing;
+        mazeLayout = GenerateMazeLayout(rows, columns);
         BuildMazeGeometry(mazeParent, mazeLayout, rows, columns, spacing);
 
         Debug.Log($"Labyrinthe généré ({rows}x{columns}) avec un tracé aléatoire.");
@@ -226,6 +236,10 @@ public class LevelGenerator : MonoBehaviour
         float offsetX = -columns * spacing * 0.5f;
         float offsetZ = -rows * spacing * 0.5f;
 
+        cachedCellHalf = cellHalf;
+        cachedOffsetX = offsetX;
+        cachedOffsetZ = offsetZ;
+
         for (int row = 0; row < rows; row++)
         {
             for (int col = 0; col < columns; col++)
@@ -262,6 +276,35 @@ public class LevelGenerator : MonoBehaviour
         }
     }
 
+    private Vector3 GetCellCenterPosition(int row, int column)
+    {
+        if (cachedSpacing <= 0f || cachedRows <= 0 || cachedColumns <= 0)
+        {
+            return Vector3.zero;
+        }
+
+        row = Mathf.Clamp(row, 0, cachedRows - 1);
+        column = Mathf.Clamp(column, 0, cachedColumns - 1);
+
+        float x = cachedOffsetX + column * cachedSpacing + cachedCellHalf;
+        float z = cachedOffsetZ + row * cachedSpacing + cachedCellHalf;
+        return new Vector3(x, 0f, z);
+    }
+
+    private Vector3 GetPlayerSpawnPosition()
+    {
+        if (mazeLayout == null || cachedRows <= 0 || cachedColumns <= 0)
+        {
+            return playerStartPosition;
+        }
+
+        int column = Mathf.Clamp(playerStartCell.x, 0, cachedColumns - 1);
+        int row = Mathf.Clamp(playerStartCell.y, 0, cachedRows - 1);
+        Vector3 cellCenter = GetCellCenterPosition(row, column);
+        cellCenter.y = playerStartPosition.y;
+        return cellCenter;
+    }
+
     /// <summary>
     /// Crée le personnage joueur avec tous ses composants
     /// </summary>
@@ -274,24 +317,13 @@ public class LevelGenerator : MonoBehaviour
         }
         else
         {
-            // Créer une capsule pour le joueur lorsque aucun modèle n'est fourni
-            player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            player.name = "Player";
+            player = new GameObject("Player");
             player.transform.SetParent(levelParent.transform, true);
-
-            // Appliquer le matériau si disponible uniquement pour le maillage généré
-            if (playerMaterial != null)
-            {
-                Renderer generatedRenderer = player.GetComponent<Renderer>();
-                if (generatedRenderer != null)
-                {
-                    generatedRenderer.material = playerMaterial;
-                }
-            }
         }
 
         player.tag = "Player";
-        player.transform.position = playerStartPosition;
+        Vector3 spawnPosition = GetPlayerSpawnPosition();
+        player.transform.position = spawnPosition;
         if (player.transform.parent != levelParent.transform)
         {
             player.transform.SetParent(levelParent.transform, true);
@@ -329,7 +361,7 @@ public class LevelGenerator : MonoBehaviour
         playerController.moveSpeed = playerMoveSpeed;
         playerController.jumpForce = playerJumpForce;
 
-        Debug.Log("Joueur créé à la position: " + playerStartPosition + (playerPrefab != null ? " avec le modèle fourni." : " via une capsule par défaut."));
+        Debug.Log("Joueur créé à la position: " + spawnPosition + (playerPrefab != null ? " avec le modèle fourni." : " via un objet placeholder."));
     }
 
     /// <summary>
