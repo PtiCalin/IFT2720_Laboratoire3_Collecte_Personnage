@@ -425,6 +425,23 @@ Pour changer les contrôles, modifiez les inputs dans `PlayerController.cs` :
 4. Poussez vers la branche (`git push origin feature/AmazingFeature`)
 5. Ouvrez une Pull Request (utilisez le template fourni)
 
+## 🎨 Assets & Credits
+
+### 3D Models
+
+**Low Poly 3D Treasure Items Game Assets**
+- **Author:** [mehrasaur](https://mehrasaur.itch.io/)
+- **Source:** [itch.io](https://mehrasaur.itch.io/treasure-pack)
+- **License:** CC0 (Public Domain)
+- **Published:** January 18, 2018
+- **Updated:** March 04, 2018
+- **Contents:** Chests, coins, gems (cut & uncut), keys, medals, and other treasure items
+- **Formats:** .blend, .obj + .mtl, .fbx
+- **Tags:** 3D, chest, coin, gem, Loot, Low-poly, treasure
+- **Rating:** ⭐⭐⭐⭐⭐ (5.0/5 - 2 ratings)
+
+These beautiful low-poly treasure models are used as collectibles throughout the game. The assets are provided without materials and are located in `Assets/Models/Collectibles/`.
+
 ## 📄 Licence
 
 Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de détails.
