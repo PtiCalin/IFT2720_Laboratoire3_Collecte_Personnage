@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -25,6 +26,9 @@ public class LevelGenerator : MonoBehaviour
     [SerializeField] private int treasurePointsValue = 50;
     
     [Header("Configuration du Labyrinthe")]
+    [SerializeField, Min(2)] private int mazeRows = 12;
+    [SerializeField, Min(2)] private int mazeColumns = 12;
+    [SerializeField, Min(1f)] private float cellSize = 4f;
     [SerializeField] private float wallHeight = 2f;
     [SerializeField] private float wallThickness = 0.5f;
     
@@ -37,6 +41,14 @@ public class LevelGenerator : MonoBehaviour
 
     private GameObject player;
     private GameObject levelParent;
+
+    private enum MazeDirection
+    {
+        North = 0,
+        South = 1,
+        East = 2,
+        West = 3
+    }
 
     void Start()
     {
@@ -79,23 +91,17 @@ public class LevelGenerator : MonoBehaviour
     /// </summary>
     private void CreateMaze()
     {
+        int rows = Mathf.Max(mazeRows, 2);
+        int columns = Mathf.Max(mazeColumns, 2);
+        float spacing = Mathf.Max(cellSize, 1f);
+
         GameObject mazeParent = new GameObject("Maze");
-        mazeParent.transform.parent = levelParent.transform;
-        
-        // Créer les murs extérieurs (bordures)
-        CreateWall(new Vector3(0, wallHeight/2, 25), new Vector3(50, wallHeight, wallThickness), mazeParent); // Mur Nord
-        CreateWall(new Vector3(0, wallHeight/2, -25), new Vector3(50, wallHeight, wallThickness), mazeParent); // Mur Sud
-        CreateWall(new Vector3(25, wallHeight/2, 0), new Vector3(wallThickness, wallHeight, 50), mazeParent); // Mur Est
-        CreateWall(new Vector3(-25, wallHeight/2, 0), new Vector3(wallThickness, wallHeight, 50), mazeParent); // Mur Ouest
-        
-        // Créer quelques murs intérieurs pour former un labyrinthe simple
-        CreateWall(new Vector3(-10, wallHeight/2, 0), new Vector3(wallThickness, wallHeight, 30), mazeParent);
-        CreateWall(new Vector3(10, wallHeight/2, 5), new Vector3(wallThickness, wallHeight, 20), mazeParent);
-        CreateWall(new Vector3(0, wallHeight/2, -10), new Vector3(20, wallHeight, wallThickness), mazeParent);
-        CreateWall(new Vector3(15, wallHeight/2, 15), new Vector3(15, wallHeight, wallThickness), mazeParent);
-        CreateWall(new Vector3(-15, wallHeight/2, -15), new Vector3(10, wallHeight, wallThickness), mazeParent);
-        
-        Debug.Log("Labyrinthe créé");
+        mazeParent.transform.SetParent(levelParent.transform, true);
+
+        bool[,,] mazeLayout = GenerateMazeLayout(rows, columns);
+        BuildMazeGeometry(mazeParent, mazeLayout, rows, columns, spacing);
+
+        Debug.Log($"Labyrinthe généré ({rows}x{columns}) avec un tracé aléatoire.");
     }
 
     /// <summary>
@@ -113,6 +119,146 @@ public class LevelGenerator : MonoBehaviour
         if (wallMaterial != null)
         {
             wall.GetComponent<Renderer>().material = wallMaterial;
+        }
+    }
+
+    private bool[,,] GenerateMazeLayout(int rows, int columns)
+    {
+        bool[,,] layout = new bool[rows, columns, 4];
+        for (int row = 0; row < rows; row++)
+        {
+            for (int col = 0; col < columns; col++)
+            {
+                for (int dir = 0; dir < 4; dir++)
+                {
+                    layout[row, col, dir] = true;
+                }
+            }
+        }
+
+        bool[,] visited = new bool[rows, columns];
+        Stack<Vector2Int> stack = new Stack<Vector2Int>();
+
+        Vector2Int startCell = new Vector2Int(0, 0);
+        visited[startCell.x, startCell.y] = true;
+        stack.Push(startCell);
+
+        while (stack.Count > 0)
+        {
+            Vector2Int currentCell = stack.Peek();
+            List<(MazeDirection direction, Vector2Int cell)> neighbors = GetUnvisitedNeighbors(currentCell, visited, rows, columns);
+
+            if (neighbors.Count > 0)
+            {
+                int randomIndex = Random.Range(0, neighbors.Count);
+                MazeDirection direction = neighbors[randomIndex].direction;
+                Vector2Int nextCell = neighbors[randomIndex].cell;
+
+                RemoveWallBetween(layout, currentCell, nextCell, direction);
+                visited[nextCell.x, nextCell.y] = true;
+                stack.Push(nextCell);
+            }
+            else
+            {
+                stack.Pop();
+            }
+        }
+
+        return layout;
+    }
+
+    private List<(MazeDirection direction, Vector2Int cell)> GetUnvisitedNeighbors(Vector2Int cell, bool[,] visited, int rows, int columns)
+    {
+        var neighbors = new List<(MazeDirection direction, Vector2Int cell)>();
+        int row = cell.x;
+        int col = cell.y;
+
+        if (row + 1 < rows && !visited[row + 1, col])
+        {
+            neighbors.Add((MazeDirection.North, new Vector2Int(row + 1, col)));
+        }
+
+        if (col + 1 < columns && !visited[row, col + 1])
+        {
+            neighbors.Add((MazeDirection.East, new Vector2Int(row, col + 1)));
+        }
+
+        if (row - 1 >= 0 && !visited[row - 1, col])
+        {
+            neighbors.Add((MazeDirection.South, new Vector2Int(row - 1, col)));
+        }
+
+        if (col - 1 >= 0 && !visited[row, col - 1])
+        {
+            neighbors.Add((MazeDirection.West, new Vector2Int(row, col - 1)));
+        }
+
+        return neighbors;
+    }
+
+    private void RemoveWallBetween(bool[,,] layout, Vector2Int current, Vector2Int next, MazeDirection direction)
+    {
+        layout[current.x, current.y, (int)direction] = false;
+        MazeDirection opposite = GetOppositeDirection(direction);
+        layout[next.x, next.y, (int)opposite] = false;
+    }
+
+    private MazeDirection GetOppositeDirection(MazeDirection direction)
+    {
+        switch (direction)
+        {
+            case MazeDirection.North:
+                return MazeDirection.South;
+            case MazeDirection.South:
+                return MazeDirection.North;
+            case MazeDirection.East:
+                return MazeDirection.West;
+            case MazeDirection.West:
+                return MazeDirection.East;
+            default:
+                return MazeDirection.North;
+        }
+    }
+
+    private void BuildMazeGeometry(GameObject mazeParent, bool[,,] layout, int rows, int columns, float spacing)
+    {
+        float cellHalf = spacing * 0.5f;
+        float offsetX = -columns * spacing * 0.5f;
+        float offsetZ = -rows * spacing * 0.5f;
+
+        for (int row = 0; row < rows; row++)
+        {
+            for (int col = 0; col < columns; col++)
+            {
+                Vector3 cellCenter = new Vector3(
+                    offsetX + col * spacing + cellHalf,
+                    wallHeight * 0.5f,
+                    offsetZ + row * spacing + cellHalf);
+
+                if (layout[row, col, (int)MazeDirection.North])
+                {
+                    Vector3 position = cellCenter + new Vector3(0f, 0f, cellHalf);
+                    CreateWall(position, new Vector3(spacing, wallHeight, wallThickness), mazeParent);
+                }
+
+                if (layout[row, col, (int)MazeDirection.East])
+                {
+                    Vector3 position = cellCenter + new Vector3(cellHalf, 0f, 0f);
+                    CreateWall(position, new Vector3(wallThickness, wallHeight, spacing), mazeParent);
+                }
+
+                if (row == 0 && layout[row, col, (int)MazeDirection.South])
+                {
+                    Vector3 position = cellCenter - new Vector3(0f, 0f, cellHalf);
+                    CreateWall(position, new Vector3(spacing, wallHeight, wallThickness), mazeParent);
+                }
+
+                if (col == 0 && layout[row, col, (int)MazeDirection.West])
+                {
+                    Vector3 position = cellCenter - new Vector3(cellHalf, 0f, 0f);
+                    CreateWall(position, new Vector3(wallThickness, wallHeight, spacing), mazeParent);
+                }
+            }
         }
     }
 
@@ -300,8 +446,17 @@ public class LevelGenerator : MonoBehaviour
     /// </summary>
     private Vector3 GetRandomPositionInMaze(float height)
     {
-        float x = Random.Range(-20f, 20f);
-        float z = Random.Range(-20f, 20f);
+        float spacing = Mathf.Max(cellSize, 1f);
+        float width = Mathf.Max(mazeColumns, 2) * spacing;
+        float depth = Mathf.Max(mazeRows, 2) * spacing;
+
+        float halfWidth = width * 0.5f;
+        float halfDepth = depth * 0.5f;
+        float marginUpperBound = Mathf.Max(Mathf.Min(halfWidth, halfDepth) - 0.1f, 0.1f);
+        float margin = Mathf.Clamp(spacing * 0.5f, 0.1f, marginUpperBound);
+
+        float x = Random.Range(-halfWidth + margin, halfWidth - margin);
+        float z = Random.Range(-halfDepth + margin, halfDepth - margin);
         return new Vector3(x, height, z);
     }
 }
