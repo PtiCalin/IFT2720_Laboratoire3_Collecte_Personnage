@@ -376,6 +376,12 @@ public class LevelGenerator : MonoBehaviour
         playerController.moveSpeed = playerMoveSpeed;
         playerController.jumpForce = playerJumpForce;
 
+        ThirdPersonCamera followCamera = FindFirstObjectByType<ThirdPersonCamera>();
+        if (followCamera != null)
+        {
+            followCamera.SetTarget(player.transform);
+        }
+
         Debug.Log("Joueur créé à la position: " + spawnPosition + (playerPrefab != null ? " avec le modèle fourni." : " via un objet placeholder."));
     }
 

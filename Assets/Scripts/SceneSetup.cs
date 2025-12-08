@@ -71,64 +71,12 @@ public class SceneSetup : MonoBehaviour
             GameObject cameraObj = new GameObject("Main Camera");
             mainCamera = cameraObj.AddComponent<Camera>();
             cameraObj.AddComponent<AudioListener>();
-            cameraObj.tag = "MainCamera";
         }
 
-        if (mainCamera.GetComponent<AudioListener>() == null)
-        {
-            mainCamera.gameObject.AddComponent<AudioListener>();
-        }
-
-        mainCamera.transform.position = new Vector3(0f, 2f, -6f);
-        mainCamera.transform.rotation = Quaternion.identity;
-        mainCamera.backgroundColor = new Color(0.2f, 0.3f, 0.4f);
-
-        ThirdPersonCamera thirdPerson = mainCamera.GetComponent<ThirdPersonCamera>();
-        if (thirdPerson == null)
-        {
-            thirdPerson = mainCamera.gameObject.AddComponent<ThirdPersonCamera>();
-        }
-
-        GameObject birdsEyeObj = GameObject.Find("BirdsEyeCamera");
-        if (birdsEyeObj == null)
-        {
-            birdsEyeObj = new GameObject("BirdsEyeCamera");
-        }
-
-        Camera birdsEyeCamera = birdsEyeObj.GetComponent<Camera>();
-        if (birdsEyeCamera == null)
-        {
-            birdsEyeCamera = birdsEyeObj.AddComponent<Camera>();
-        }
-        birdsEyeCamera.orthographic = true;
-        birdsEyeCamera.enabled = false;
-        birdsEyeObj.transform.position = new Vector3(0f, 35f, 0f);
-        birdsEyeObj.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
-        AudioListener birdsListener = birdsEyeObj.GetComponent<AudioListener>();
-        if (birdsListener != null)
-        {
-            birdsListener.enabled = false;
-        }
-
-        BirdsEyeCamera birdsEyeController = birdsEyeObj.GetComponent<BirdsEyeCamera>();
-        if (birdsEyeController == null)
-        {
-            birdsEyeController = birdsEyeObj.AddComponent<BirdsEyeCamera>();
-        }
-        birdsEyeController.enabled = false;
-
-        GameObject cameraManager = GameObject.Find("CameraManager");
-        if (cameraManager == null)
-        {
-            cameraManager = new GameObject("CameraManager");
-        }
-
-        CameraSwitcher switcher = cameraManager.GetComponent<CameraSwitcher>();
-        if (switcher == null)
-        {
-            switcher = cameraManager.AddComponent<CameraSwitcher>();
-        }
-        switcher.Initialize(mainCamera, birdsEyeCamera);
+        // Positionner la caméra pour une bonne vue du jeu
+        mainCamera.transform.position = new Vector3(0, 20, -15);
+        mainCamera.transform.eulerAngles = new Vector3(45, 0, 0);
+        mainCamera.backgroundColor = new Color(0.2f, 0.3f, 0.4f); // Bleu ciel
 
         Debug.Log("✓ Caméra configurée");
     }
