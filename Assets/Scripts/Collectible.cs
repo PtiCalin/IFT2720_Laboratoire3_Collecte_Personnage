@@ -47,8 +47,8 @@ public class Collectible : MonoBehaviour
 
     private void AnimateCollectible()
     {
-        // Rotate around Z axis
-        transform.Rotate(Vector3.forward * rotationSpeed * Time.deltaTime);
+        // Rotate around local Y axis (self) to keep the pivot centered
+        transform.Rotate(Vector3.up * rotationSpeed * Time.deltaTime, Space.Self);
 
         // Bob up and down
         Vector3 newPosition = startPosition;
