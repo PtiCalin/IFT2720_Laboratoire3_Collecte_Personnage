@@ -13,6 +13,13 @@ Tous les changements notables de ce projet seront documentés dans ce fichier.
 - Sauvegarde du meilleur score
 - Power-ups et bonus
 
+### Ajouté
+- Caméra third-person orbitale (`ThirdPersonCamera`) avec rotation 360° autour du joueur et lissage paramétrable.
+
+### Modifié
+- `SceneSetup` attache désormais automatiquement la caméra third-person à la caméra principale créée.
+- `LevelGenerator` connecte le joueur généré au composant de caméra s'il est présent.
+
 ---
 
 ## [4.0.0] - 2025-12-07
