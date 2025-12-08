@@ -2,171 +2,108 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-/// <summary>
-/// Génère automatiquement le niveau de jeu incluant :
-/// - Le sol (Plane)
-/// - Le labyrinthe (murs)
-/// - Le joueur
-/// - Les pièces et trésors collectibles
-/// </summary>
 public class LevelGenerator : MonoBehaviour
 {
-    [Header("Configuration du Sol")]
+    [Header("Sol")]
     [SerializeField] private Vector3 groundScale = new Vector3(5, 1, 5);
+    [SerializeField] private Material groundMaterial;
     
-    [Header("Configuration du Joueur")]
+    [Header("Joueur")]
     [SerializeField] private Vector3 playerStartPosition = new Vector3(0, 2, 0);
     [SerializeField] private float playerMoveSpeed = 5f;
     [SerializeField] private float playerJumpForce = 5f;
     [SerializeField] private GameObject playerPrefab;
-    [SerializeField] private Vector2Int playerStartCell = Vector2Int.zero;
     
-    [Header("Configuration des Collectibles")]
+    [Header("Collectibles")]
     [SerializeField] private int numberOfCoins = 10;
     [SerializeField] private int numberOfTreasures = 3;
     [SerializeField] private int coinPointsValue = 10;
     [SerializeField] private int treasurePointsValue = 50;
     [SerializeField] private GameObject coinPrefab;
     [SerializeField] private GameObject treasurePrefab;
-    [SerializeField] private GameObject defaultPlayerPrefab;
+    [SerializeField] private Material coinMaterial;
+    [SerializeField] private Material treasureMaterial;
     
-    [Header("Configuration du Labyrinthe")]
+    [Header("Labyrinthe")]
     [SerializeField, Min(2)] private int mazeRows = 12;
     [SerializeField, Min(2)] private int mazeColumns = 12;
     [SerializeField, Min(1f)] private float cellSize = 4f;
     [SerializeField] private float wallHeight = 2f;
     [SerializeField] private float wallThickness = 0.5f;
-    
-    [Header("Matériaux")]
-    [SerializeField] private Material groundMaterial;
     [SerializeField] private Material wallMaterial;
-    [SerializeField] private Material coinMaterial;
-    [SerializeField] private Material treasureMaterial;
 
-    private GameObject player;
     private GameObject levelParent;
     private bool[,,] mazeLayout;
-    private int cachedRows;
-    private int cachedColumns;
-    private float cachedSpacing;
-    private float cachedCellHalf;
-    private float cachedOffsetX;
-    private float cachedOffsetZ;
-    private Vector3 cachedMazeCenter;
-    private float cachedMazeWidth;
-    private float cachedMazeDepth;
+    private int rows, columns;
+    private float spacing, cellHalf, offsetX, offsetZ;
     private bool[,] occupiedCells;
     private List<Vector2Int> availableSpawnCells;
-    private Vector2Int entranceCell;
-    private Vector2Int exitCell;
-    private bool hasEntranceAndExit;
+    private Vector2Int entranceCell, exitCell;
 
     private const BindingFlags CollectibleFieldFlags = BindingFlags.NonPublic | BindingFlags.Instance;
     private static readonly Dictionary<string, FieldInfo> CollectibleFieldCache = new Dictionary<string, FieldInfo>(5);
 
-    private enum MazeDirection
-    {
-        North = 0,
-        South = 1,
-        East = 2,
-        West = 3
-    }
+    private enum MazeDirection { North = 0, South, East, West }
 
     void Start()
     {
-        // Créer un GameObject parent pour organiser la scène
         levelParent = new GameObject("Generated Level");
-        
-        // Générer tous les éléments du niveau
         CreateGround();
         CreateMaze();
         CreatePlayer();
         CreateCollectibles();
-        
-        Debug.Log("Niveau généré avec succès!");
     }
 
-    /// <summary>
-    /// Crée le sol (Plane) du niveau
-    /// </summary>
     private void CreateGround()
     {
-        // Créer un plan comme sol
         GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
         ground.name = "Ground";
         ground.tag = "Ground";
-        ground.transform.position = Vector3.zero;
+        ground.transform.SetParent(levelParent.transform);
         ground.transform.localScale = groundScale;
-        ground.transform.parent = levelParent.transform;
         
-        // Appliquer le matériau si disponible
         if (groundMaterial != null)
-        {
             ground.GetComponent<Renderer>().material = groundMaterial;
-        }
-        
-        Debug.Log("Sol créé");
     }
 
-    /// <summary>
-    /// Crée un labyrinthe simple avec des murs
-    /// </summary>
     private void CreateMaze()
     {
-        int rows = Mathf.Max(mazeRows, 2);
-        int columns = Mathf.Max(mazeColumns, 2);
-        float spacing = Mathf.Max(cellSize, 1f);
+        rows = Mathf.Max(mazeRows, 2);
+        columns = Mathf.Max(mazeColumns, 2);
+        spacing = Mathf.Max(cellSize, 1f);
 
         GameObject mazeParent = new GameObject("Maze");
-        mazeParent.transform.SetParent(levelParent.transform, true);
+        mazeParent.transform.SetParent(levelParent.transform);
 
-        cachedRows = rows;
-        cachedColumns = columns;
-        cachedSpacing = spacing;
         mazeLayout = GenerateMazeLayout(rows, columns);
-        ConfigureEntranceAndExit(mazeLayout, rows, columns);
-        BuildMazeGeometry(mazeParent, mazeLayout, rows, columns, spacing);
+        ConfigureEntranceAndExit();
+        BuildMazeGeometry(mazeParent);
 
-        if (hasEntranceAndExit)
-        {
-            ReserveCell(entranceCell.x, entranceCell.y);
-            ReserveCell(exitCell.x, exitCell.y);
-        }
+        ReserveCell(entranceCell.x, entranceCell.y);
+        ReserveCell(exitCell.x, exitCell.y);
 
-        cachedMazeWidth = columns * spacing;
-        cachedMazeDepth = rows * spacing;
-        cachedMazeCenter = GetCellCenterPosition(rows / 2, columns / 2);
-
-        CameraRigController cameraRig = FindFirstObjectByType<CameraRigController>(FindObjectsInactive.Include);
+        // Configure camera bounds
+        var cameraRig = FindFirstObjectByType<CameraRigController>(FindObjectsInactive.Include);
         if (cameraRig != null)
         {
-            cameraRig.SetCenter(cachedMazeCenter);
-            cameraRig.ConfigureBounds(cachedMazeWidth, cachedMazeDepth);
+            Vector3 center = GetCellCenter(rows / 2, columns / 2);
+            cameraRig.SetCenter(center);
+            cameraRig.ConfigureBounds(columns * spacing, rows * spacing);
             if (cameraRig.CurrentMode == CameraRigController.CameraMode.BirdsEye)
-            {
                 cameraRig.SnapToCenter();
-            }
         }
-
-        Debug.Log($"Labyrinthe généré ({rows}x{columns}) avec un tracé aléatoire.");
     }
 
-    /// <summary>
-    /// Crée un mur individuel
-    /// </summary>
     private void CreateWall(Vector3 position, Vector3 scale, GameObject parent)
     {
         GameObject wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
         wall.name = "Wall";
         wall.transform.position = position;
         wall.transform.localScale = scale;
-        wall.transform.parent = parent.transform;
+        wall.transform.SetParent(parent.transform);
         
-        // Appliquer le matériau si disponible
         if (wallMaterial != null)
-        {
             wall.GetComponent<Renderer>().material = wallMaterial;
-        }
     }
 
     private bool[,,] GenerateMazeLayout(int rows, int columns)
@@ -214,101 +151,53 @@ public class LevelGenerator : MonoBehaviour
         return layout;
     }
 
-    private List<(MazeDirection direction, Vector2Int cell)> GetUnvisitedNeighbors(Vector2Int cell, bool[,] visited, int rows, int columns)
+    private List<(MazeDirection direction, Vector2Int cell)> GetUnvisitedNeighbors(Vector2Int cell, bool[,] visited, int r, int c)
     {
-        var neighbors = new List<(MazeDirection direction, Vector2Int cell)>();
-        int row = cell.x;
-        int col = cell.y;
+        var neighbors = new List<(MazeDirection, Vector2Int)>();
+        int row = cell.x, col = cell.y;
 
-        if (row + 1 < rows && !visited[row + 1, col])
-        {
-            neighbors.Add((MazeDirection.North, new Vector2Int(row + 1, col)));
-        }
-
-        if (col + 1 < columns && !visited[row, col + 1])
-        {
-            neighbors.Add((MazeDirection.East, new Vector2Int(row, col + 1)));
-        }
-
-        if (row - 1 >= 0 && !visited[row - 1, col])
-        {
-            neighbors.Add((MazeDirection.South, new Vector2Int(row - 1, col)));
-        }
-
-        if (col - 1 >= 0 && !visited[row, col - 1])
-        {
-            neighbors.Add((MazeDirection.West, new Vector2Int(row, col - 1)));
-        }
+        if (row + 1 < r && !visited[row + 1, col]) neighbors.Add((MazeDirection.North, new Vector2Int(row + 1, col)));
+        if (col + 1 < c && !visited[row, col + 1]) neighbors.Add((MazeDirection.East, new Vector2Int(row, col + 1)));
+        if (row > 0 && !visited[row - 1, col]) neighbors.Add((MazeDirection.South, new Vector2Int(row - 1, col)));
+        if (col > 0 && !visited[row, col - 1]) neighbors.Add((MazeDirection.West, new Vector2Int(row, col - 1)));
 
         return neighbors;
     }
 
-    private void RemoveWallBetween(bool[,,] layout, Vector2Int current, Vector2Int next, MazeDirection direction)
+    private void RemoveWallBetween(bool[,,] layout, Vector2Int current, Vector2Int next, MazeDirection dir)
     {
-        layout[current.x, current.y, (int)direction] = false;
-        MazeDirection opposite = GetOppositeDirection(direction);
-        layout[next.x, next.y, (int)opposite] = false;
+        layout[current.x, current.y, (int)dir] = false;
+        layout[next.x, next.y, (int)GetOppositeDirection(dir)] = false;
     }
 
-    private MazeDirection GetOppositeDirection(MazeDirection direction)
+    private MazeDirection GetOppositeDirection(MazeDirection dir) => dir switch
     {
-        switch (direction)
-        {
-            case MazeDirection.North:
-                return MazeDirection.South;
-            case MazeDirection.South:
-                return MazeDirection.North;
-            case MazeDirection.East:
-                return MazeDirection.West;
-            case MazeDirection.West:
-                return MazeDirection.East;
-            default:
-                return MazeDirection.North;
-        }
-    }
+        MazeDirection.North => MazeDirection.South,
+        MazeDirection.South => MazeDirection.North,
+        MazeDirection.East => MazeDirection.West,
+        _ => MazeDirection.East
+    };
 
-    private void BuildMazeGeometry(GameObject mazeParent, bool[,,] layout, int rows, int columns, float spacing)
+    private void BuildMazeGeometry(GameObject parent)
     {
-        float cellHalf = spacing * 0.5f;
-        float offsetX = -columns * spacing * 0.5f;
-        float offsetZ = -rows * spacing * 0.5f;
-
-        cachedCellHalf = cellHalf;
-        cachedOffsetX = offsetX;
-        cachedOffsetZ = offsetZ;
+        cellHalf = spacing * 0.5f;
+        offsetX = -columns * spacing * 0.5f;
+        offsetZ = -rows * spacing * 0.5f;
 
         for (int row = 0; row < rows; row++)
         {
             for (int col = 0; col < columns; col++)
             {
-                Vector3 cellCenter = new Vector3(
-                    offsetX + col * spacing + cellHalf,
-                    wallHeight * 0.5f,
-                    offsetZ + row * spacing + cellHalf);
+                Vector3 center = new Vector3(offsetX + col * spacing + cellHalf, wallHeight * 0.5f, offsetZ + row * spacing + cellHalf);
 
-                if (layout[row, col, (int)MazeDirection.North])
-                {
-                    Vector3 position = cellCenter + new Vector3(0f, 0f, cellHalf);
-                    CreateWall(position, new Vector3(spacing, wallHeight, wallThickness), mazeParent);
-                }
-
-                if (layout[row, col, (int)MazeDirection.East])
-                {
-                    Vector3 position = cellCenter + new Vector3(cellHalf, 0f, 0f);
-                    CreateWall(position, new Vector3(wallThickness, wallHeight, spacing), mazeParent);
-                }
-
-                if (row == 0 && layout[row, col, (int)MazeDirection.South])
-                {
-                    Vector3 position = cellCenter - new Vector3(0f, 0f, cellHalf);
-                    CreateWall(position, new Vector3(spacing, wallHeight, wallThickness), mazeParent);
-                }
-
-                if (col == 0 && layout[row, col, (int)MazeDirection.West])
-                {
-                    Vector3 position = cellCenter - new Vector3(cellHalf, 0f, 0f);
-                    CreateWall(position, new Vector3(wallThickness, wallHeight, spacing), mazeParent);
-                }
+                if (mazeLayout[row, col, (int)MazeDirection.North])
+                    CreateWall(center + new Vector3(0, 0, cellHalf), new Vector3(spacing, wallHeight, wallThickness), parent);
+                if (mazeLayout[row, col, (int)MazeDirection.East])
+                    CreateWall(center + new Vector3(cellHalf, 0, 0), new Vector3(wallThickness, wallHeight, spacing), parent);
+                if (row == 0 && mazeLayout[row, col, (int)MazeDirection.South])
+                    CreateWall(center - new Vector3(0, 0, cellHalf), new Vector3(spacing, wallHeight, wallThickness), parent);
+                if (col == 0 && mazeLayout[row, col, (int)MazeDirection.West])
+                    CreateWall(center - new Vector3(cellHalf, 0, 0), new Vector3(wallThickness, wallHeight, spacing), parent);
             }
         }
 
@@ -316,460 +205,201 @@ public class LevelGenerator : MonoBehaviour
         availableSpawnCells = null;
     }
 
-    private void ConfigureEntranceAndExit(bool[,,] layout, int rows, int columns)
+    private void ConfigureEntranceAndExit()
     {
-        hasEntranceAndExit = false;
-
-        if (layout == null || rows <= 0 || columns <= 0)
-        {
-            return;
-        }
-
         entranceCell = new Vector2Int(0, 0);
         exitCell = new Vector2Int(rows - 1, columns - 1);
-
-        layout[entranceCell.x, entranceCell.y, (int)MazeDirection.West] = false;
-        layout[exitCell.x, exitCell.y, (int)MazeDirection.East] = false;
-
-        hasEntranceAndExit = true;
+        mazeLayout[0, 0, (int)MazeDirection.West] = false;
+        mazeLayout[rows - 1, columns - 1, (int)MazeDirection.East] = false;
     }
 
-    private Vector3 GetCellCenterPosition(int row, int column)
+    private Vector3 GetCellCenter(int row, int col)
     {
-        if (cachedSpacing <= 0f || cachedRows <= 0 || cachedColumns <= 0)
-        {
-            return Vector3.zero;
-        }
-
-        row = Mathf.Clamp(row, 0, cachedRows - 1);
-        column = Mathf.Clamp(column, 0, cachedColumns - 1);
-
-        float x = cachedOffsetX + column * cachedSpacing + cachedCellHalf;
-        float z = cachedOffsetZ + row * cachedSpacing + cachedCellHalf;
-        return new Vector3(x, 0f, z);
+        row = Mathf.Clamp(row, 0, rows - 1);
+        col = Mathf.Clamp(col, 0, columns - 1);
+        return new Vector3(offsetX + col * spacing + cellHalf, 0f, offsetZ + row * spacing + cellHalf);
     }
 
-    private Vector2Int GetPlayerSpawnCell()
-    {
-        if (cachedRows <= 0 || cachedColumns <= 0)
-        {
-            return Vector2Int.zero;
-        }
-
-        if (hasEntranceAndExit)
-        {
-            int row = Mathf.Clamp(entranceCell.x, 0, cachedRows - 1);
-            int column = Mathf.Clamp(entranceCell.y, 0, cachedColumns - 1);
-            return new Vector2Int(row, column);
-        }
-
-        int fallbackColumn = Mathf.Clamp(playerStartCell.x, 0, Mathf.Max(cachedColumns - 1, 0));
-        int fallbackRow = Mathf.Clamp(playerStartCell.y, 0, Mathf.Max(cachedRows - 1, 0));
-        return new Vector2Int(fallbackRow, fallbackColumn);
-    }
-
-    private Vector3 GetPlayerSpawnPosition()
-    {
-        if (mazeLayout == null || cachedRows <= 0 || cachedColumns <= 0)
-        {
-            return playerStartPosition;
-        }
-
-        Vector2Int spawnCell = GetPlayerSpawnCell();
-        Vector3 cellCenter = GetCellCenterPosition(spawnCell.x, spawnCell.y);
-        cellCenter.y = playerStartPosition.y;
-        return cellCenter;
-    }
-
-    /// <summary>
-    /// Crée le personnage joueur avec tous ses composants
-    /// </summary>
     private void CreatePlayer()
     {
-        GameObject prefabToUse = playerPrefab != null ? playerPrefab : defaultPlayerPrefab;
-
-        if (prefabToUse != null)
-        {
-            player = Instantiate(prefabToUse, playerStartPosition, Quaternion.identity, levelParent.transform);
-            player.name = prefabToUse.name;
-        }
-        else
-        {
-            player = new GameObject("Player");
-            player.transform.SetParent(levelParent.transform, true);
-        }
+        // Instantiate or create player object
+        GameObject player = playerPrefab != null 
+            ? Instantiate(playerPrefab, Vector3.zero, Quaternion.identity, levelParent.transform)
+            : new GameObject("Player");
 
         player.tag = "Player";
-        Vector3 spawnPosition = GetPlayerSpawnPosition();
-        player.transform.position = spawnPosition;
-        if (player.transform.parent != levelParent.transform)
-        {
-            player.transform.SetParent(levelParent.transform, true);
-        }
+        Vector3 spawnPos = GetCellCenter(entranceCell.x, entranceCell.y);
+        player.transform.SetParent(levelParent.transform);
 
-        Vector2Int spawnCell = GetPlayerSpawnCell();
-        ReserveCell(spawnCell.x, spawnCell.y);
-
-        // S'assurer qu'un Rigidbody est présent et configuré
-        Rigidbody rb = player.GetComponent<Rigidbody>();
-        if (rb == null)
-        {
-            rb = player.AddComponent<Rigidbody>();
-            rb.mass = 1f;
-            rb.linearDamping = 0f;
-            rb.angularDamping = 0.05f;
-        }
+        // Setup physics
+        Rigidbody rb = player.GetComponent<Rigidbody>() ?? player.AddComponent<Rigidbody>();
+        rb.mass = 1f;
+        rb.linearDamping = 0f;
+        rb.angularDamping = 0.05f;
         rb.useGravity = true;
         rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
 
-        // Garantir la présence d'un collider utilisable pour la physique
-        Collider existingCollider = player.GetComponentInChildren<Collider>();
-        if (existingCollider == null)
-        {
+        // Ensure collider
+        Collider col = player.GetComponentInChildren<Collider>();
+        if (col == null)
             player.AddComponent<CapsuleCollider>();
-        }
-        else if (existingCollider.isTrigger)
+        else if (col.isTrigger)
+            col.isTrigger = false;
+
+        // Position player on ground using collider height or fallback value
+        float heightOffset = 1f;
+        Collider groundedCollider = player.GetComponentInChildren<Collider>();
+        if (groundedCollider != null)
         {
-            existingCollider.isTrigger = false;
+            Bounds b = groundedCollider.bounds;
+            heightOffset = b.extents.y + 0.05f;
         }
 
-        // Ajouter ou configurer le script PlayerController
-        PlayerController playerController = player.GetComponent<PlayerController>();
-        if (playerController == null)
-        {
-            playerController = player.AddComponent<PlayerController>();
-        }
-        playerController.moveSpeed = playerMoveSpeed;
-        playerController.jumpForce = playerJumpForce;
+        // Keep entrance cell but inset from the west opening so we start inside the corridor, not on the border/wall
+        float cellHalfSize = spacing * 0.5f;
+        float inset = Mathf.Max(0.5f, wallThickness + 0.2f); // stay clear of walls
+        float offsetDist = Mathf.Max(cellHalfSize - inset, 0.05f);
+        Vector3 entranceInset = Vector3.left * offsetDist; // west opening => move slightly left from center toward entrance
 
-        CameraRigController cameraRig = FindFirstObjectByType<CameraRigController>(FindObjectsInactive.Include);
+        spawnPos += entranceInset;
+        spawnPos.y = Mathf.Max(playerStartPosition.y, heightOffset);
+        player.transform.position = spawnPos;
+
+        ReserveCell(entranceCell.x, entranceCell.y);
+
+        // Setup controller
+        PlayerController controller = player.GetComponent<PlayerController>() ?? player.AddComponent<PlayerController>();
+        controller.moveSpeed = playerMoveSpeed;
+        controller.jumpForce = playerJumpForce;
+
+        // Link camera
+        var cameraRig = FindFirstObjectByType<CameraRigController>(FindObjectsInactive.Include);
         if (cameraRig != null)
         {
             cameraRig.SetTarget(player.transform);
             if (cameraRig.CurrentMode == CameraRigController.CameraMode.ThirdPerson)
-            {
                 cameraRig.SnapToTarget();
-            }
         }
-
-        Debug.Log("Joueur créé à la position: " + spawnPosition + (prefabToUse != null ? " avec le modèle fourni." : " via un objet placeholder."));
     }
 
-    /// <summary>
-    /// Crée les pièces et trésors collectibles à des positions aléatoires
-    /// </summary>
     private void CreateCollectibles()
     {
-        GameObject collectiblesParent = new GameObject("Collectibles");
-        collectiblesParent.transform.SetParent(levelParent.transform, true);
+        GameObject parent = new GameObject("Collectibles");
+        parent.transform.SetParent(levelParent.transform);
 
         EnsureSpawnCellPool();
 
-        int coinsPlaced = SpawnCollectibleBatch(
-            numberOfCoins,
-            1f,
-            0.35f,
-            collectiblesParent,
-            "pièces",
-            coinPrefab,
-            "Coin",
-            PrimitiveType.Sphere,
-            new Vector3(0.5f, 0.5f, 0.5f),
-            Color.yellow,
-            true,
-            coinMaterial,
-            false,
-            coinPointsValue,
-            100f,
-            2f,
-            0.3f);
-
-        int treasuresPlaced = SpawnCollectibleBatch(
-            numberOfTreasures,
-            1.5f,
-            0.45f,
-            collectiblesParent,
-            "trésors",
-            treasurePrefab,
-            "Treasure",
-            PrimitiveType.Cube,
-            new Vector3(0.7f, 0.7f, 0.7f),
-            new Color(1f, 0.5f, 0f),
-            false,
-            treasureMaterial,
-            true,
-            treasurePointsValue,
-            80f,
-            1.5f,
-            0.4f);
-
-        Debug.Log($"{coinsPlaced} pièces et {treasuresPlaced} trésors créés");
-    }
-
-    private int SpawnCollectibleBatch(
-        int desiredCount,
-        float spawnHeight,
-        float clearance,
-        GameObject parent,
-        string debugLabel,
-        GameObject prefab,
-        string fallbackName,
-        PrimitiveType fallbackPrimitive,
-        Vector3 fallbackScale,
-        Color fallbackColor,
-        bool preferSphereCollider,
-        Material overrideMaterial,
-        bool isTreasure,
-        int pointsValue,
-        float rotationSpeed,
-        float bobSpeed,
-        float bobHeight)
-    {
-        if (desiredCount <= 0)
+        // Spawn coins
+        int coinPlaced = 0;
+        for (int i = 0; i < numberOfCoins && TryReserveSpawnPosition(1f, 0.35f, out Vector3 pos); i++)
         {
-            return 0;
+            GameObject coin = coinPrefab != null ? Instantiate(coinPrefab, pos, Quaternion.identity, parent.transform)
+                : GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            
+            coin.name = coinPrefab != null ? coinPrefab.name : "Coin";
+            coin.transform.position = pos;
+            coin.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
+            coin.transform.SetParent(parent.transform);
+
+            Collider col = coin.GetComponent<Collider>() ?? coin.AddComponent<SphereCollider>();
+            col.isTrigger = true;
+
+            if (coinMaterial != null)
+                coin.GetComponent<Renderer>().material = coinMaterial;
+            else if (coinPrefab == null)
+                coin.GetComponent<Renderer>().material.color = Color.yellow;
+
+            Collectible c = coin.GetComponent<Collectible>() ?? coin.AddComponent<Collectible>();
+            SetCollectibleField("isTreasure", c, false);
+            SetCollectibleField("pointsValue", c, coinPointsValue);
+            SetCollectibleField("rotationSpeed", c, 100f);
+            SetCollectibleField("bobSpeed", c, 2f);
+            SetCollectibleField("bobHeight", c, 0.3f);
+            coinPlaced++;
         }
 
-        int placed = 0;
-
-        for (int i = 0; i < desiredCount; i++)
+        // Spawn treasures
+        int treasurePlaced = 0;
+        for (int i = 0; i < numberOfTreasures && TryReserveSpawnPosition(1.5f, 0.45f, out Vector3 pos); i++)
         {
-            if (!TryReserveSpawnPosition(spawnHeight, clearance, out Vector3 position))
-            {
-                if (placed < desiredCount)
-                {
-                    Debug.LogWarning($"Impossible de placer toutes les {debugLabel} : plus de cellules disponibles sans collision.");
-                }
-                break;
-            }
+            GameObject treasure = treasurePrefab != null ? Instantiate(treasurePrefab, pos, Quaternion.identity, parent.transform)
+                : GameObject.CreatePrimitive(PrimitiveType.Cube);
+            
+            treasure.name = treasurePrefab != null ? treasurePrefab.name : "Treasure";
+            treasure.transform.position = pos;
+            treasure.transform.localScale = new Vector3(0.7f, 0.7f, 0.7f);
+            treasure.transform.SetParent(parent.transform);
 
-            GameObject collectibleObject = PrepareCollectible(
-                position,
-                parent,
-                prefab,
-                fallbackName,
-                fallbackPrimitive,
-                fallbackScale,
-                overrideMaterial,
-                fallbackColor,
-                preferSphereCollider);
+            Collider col = treasure.GetComponent<Collider>() ?? treasure.AddComponent<BoxCollider>();
+            col.isTrigger = true;
 
-            Collectible collectibleComponent = EnsureCollectibleComponent(collectibleObject);
-            ConfigureCollectibleComponent(collectibleComponent, isTreasure, pointsValue, rotationSpeed, bobSpeed, bobHeight);
+            if (treasureMaterial != null)
+                treasure.GetComponent<Renderer>().material = treasureMaterial;
+            else if (treasurePrefab == null)
+                treasure.GetComponent<Renderer>().material.color = new Color(1f, 0.5f, 0f);
 
-            placed++;
+            Collectible c = treasure.GetComponent<Collectible>() ?? treasure.AddComponent<Collectible>();
+            SetCollectibleField("isTreasure", c, true);
+            SetCollectibleField("pointsValue", c, treasurePointsValue);
+            SetCollectibleField("rotationSpeed", c, 80f);
+            SetCollectibleField("bobSpeed", c, 1.5f);
+            SetCollectibleField("bobHeight", c, 0.4f);
+            treasurePlaced++;
         }
 
-        return placed;
-    }
-
-    private GameObject PrepareCollectible(
-        Vector3 position,
-        GameObject parent,
-        GameObject prefab,
-        string fallbackName,
-        PrimitiveType fallbackPrimitive,
-        Vector3 fallbackScale,
-        Material overrideMaterial,
-        Color fallbackColor,
-        bool preferSphereCollider)
-    {
-        bool usedFallback = prefab == null;
-        GameObject instance;
-
-        if (!usedFallback)
-        {
-            instance = Instantiate(prefab, position, Quaternion.identity, parent.transform);
-            instance.name = prefab.name;
-        }
-        else
-        {
-            instance = GameObject.CreatePrimitive(fallbackPrimitive);
-            instance.name = fallbackName;
-            instance.transform.SetParent(parent.transform, true);
-            instance.transform.localScale = fallbackScale;
-        }
-
-        if (instance.transform.parent != parent.transform)
-        {
-            instance.transform.SetParent(parent.transform, true);
-        }
-
-        instance.transform.position = position;
-
-        EnsureCollectibleCollider(instance, preferSphereCollider);
-        ApplyCollectibleMaterial(instance, overrideMaterial, fallbackColor, usedFallback);
-
-        return instance;
-    }
-
-    private static void EnsureCollectibleCollider(GameObject root, bool preferSphereCollider)
-    {
-        if (root == null)
-        {
-            return;
-        }
-
-        Collider[] colliders = root.GetComponentsInChildren<Collider>();
-        if (colliders.Length == 0)
-        {
-            Collider created = preferSphereCollider ? root.AddComponent<SphereCollider>() : root.AddComponent<BoxCollider>();
-            created.isTrigger = true;
-            return;
-        }
-
-        foreach (Collider collider in colliders)
-        {
-            collider.isTrigger = true;
-        }
-    }
-
-    private void ApplyCollectibleMaterial(GameObject root, Material materialOverride, Color fallbackColor, bool fallbackUsed)
-    {
-        if (root == null)
-        {
-            return;
-        }
-
-        if (materialOverride != null)
-        {
-            foreach (Renderer renderer in root.GetComponentsInChildren<Renderer>())
-            {
-                renderer.material = materialOverride;
-            }
-            return;
-        }
-
-        if (!fallbackUsed)
-        {
-            return;
-        }
-
-        Renderer fallbackRenderer = root.GetComponent<Renderer>();
-        if (fallbackRenderer != null)
-        {
-            fallbackRenderer.material.color = fallbackColor;
-        }
-    }
-
-    private Collectible EnsureCollectibleComponent(GameObject root)
-    {
-        if (root == null)
-        {
-            return null;
-        }
-
-        Collectible collectible = root.GetComponent<Collectible>();
-        if (collectible == null)
-        {
-            collectible = root.AddComponent<Collectible>();
-        }
-
-        return collectible;
-    }
-
-    private void ConfigureCollectibleComponent(
-        Collectible collectible,
-        bool isTreasure,
-        int pointsValue,
-        float rotationSpeed,
-        float bobSpeed,
-        float bobHeight)
-    {
-        if (collectible == null)
-        {
-            return;
-        }
-
-        SetCollectibleField("isTreasure", collectible, isTreasure);
-        SetCollectibleField("pointsValue", collectible, pointsValue);
-        SetCollectibleField("rotationSpeed", collectible, rotationSpeed);
-        SetCollectibleField("bobSpeed", collectible, bobSpeed);
-        SetCollectibleField("bobHeight", collectible, bobHeight);
+        Debug.Log($"{coinPlaced} pièces et {treasurePlaced} trésors créés");
     }
 
     private static void SetCollectibleField(string fieldName, Collectible target, object value)
     {
-        if (target == null || string.IsNullOrEmpty(fieldName))
-        {
-            return;
-        }
-
-        if (!CollectibleFieldCache.TryGetValue(fieldName, out FieldInfo fieldInfo) || fieldInfo == null)
+        if (!CollectibleFieldCache.TryGetValue(fieldName, out FieldInfo fieldInfo))
         {
             fieldInfo = typeof(Collectible).GetField(fieldName, CollectibleFieldFlags);
             CollectibleFieldCache[fieldName] = fieldInfo;
         }
-
         fieldInfo?.SetValue(target, value);
     }
 
-    private void ReserveCell(int row, int column)
+    private void ReserveCell(int row, int col)
     {
-        if (occupiedCells == null)
-        {
-            return;
-        }
-
-        if (row < 0 || row >= occupiedCells.GetLength(0) || column < 0 || column >= occupiedCells.GetLength(1))
-        {
-            return;
-        }
-
-        occupiedCells[row, column] = true;
+        if (occupiedCells != null && row >= 0 && row < occupiedCells.GetLength(0) && col >= 0 && col < occupiedCells.GetLength(1))
+            occupiedCells[row, col] = true;
     }
 
     private void EnsureSpawnCellPool()
     {
-        if (cachedRows <= 0 || cachedColumns <= 0)
-        {
-            availableSpawnCells = null;
-            return;
-        }
-
-        if (occupiedCells == null || occupiedCells.GetLength(0) != cachedRows || occupiedCells.GetLength(1) != cachedColumns)
-        {
-            occupiedCells = new bool[cachedRows, cachedColumns];
-        }
+        if (rows <= 0 || columns <= 0) return;
+        
+        if (occupiedCells == null || occupiedCells.GetLength(0) != rows || occupiedCells.GetLength(1) != columns)
+            occupiedCells = new bool[rows, columns];
 
         availableSpawnCells ??= new List<Vector2Int>();
         availableSpawnCells.Clear();
 
-        for (int row = 0; row < cachedRows; row++)
-        {
-            for (int column = 0; column < cachedColumns; column++)
-            {
-                if (!occupiedCells[row, column])
-                {
-                    availableSpawnCells.Add(new Vector2Int(row, column));
-                }
-            }
-        }
+        for (int r = 0; r < rows; r++)
+            for (int c = 0; c < columns; c++)
+                if (!occupiedCells[r, c])
+                    availableSpawnCells.Add(new Vector2Int(r, c));
     }
 
     private bool TryReserveSpawnPosition(float height, float clearance, out Vector3 position)
     {
         position = Vector3.zero;
+        if (availableSpawnCells == null || availableSpawnCells.Count == 0) return false;
 
-        if (availableSpawnCells == null || availableSpawnCells.Count == 0)
-        {
-            return false;
-        }
-
-        int index = Random.Range(0, availableSpawnCells.Count);
-        Vector2Int cell = availableSpawnCells[index];
-        availableSpawnCells.RemoveAt(index);
-
+        int idx = Random.Range(0, availableSpawnCells.Count);
+        Vector2Int cell = availableSpawnCells[idx];
+        availableSpawnCells.RemoveAt(idx);
         ReserveCell(cell.x, cell.y);
 
-        Vector3 cellCenter = GetCellCenterPosition(cell.x, cell.y);
-        cellCenter.y = height;
+        Vector3 center = GetCellCenter(cell.x, cell.y);
+        center.y = height;
 
-        float maxOffset = Mathf.Max(cachedCellHalf - clearance, 0f);
-        float offsetX = maxOffset > 0f ? Random.Range(-maxOffset, maxOffset) : 0f;
-        float offsetZ = maxOffset > 0f ? Random.Range(-maxOffset, maxOffset) : 0f;
+        float maxOffset = Mathf.Max(cellHalf - clearance, 0f);
+        if (maxOffset > 0f)
+            center += new Vector3(Random.Range(-maxOffset, maxOffset), 0f, Random.Range(-maxOffset, maxOffset));
 
-        position = cellCenter + new Vector3(offsetX, 0f, offsetZ);
+        position = center;
         return true;
     }
 }
