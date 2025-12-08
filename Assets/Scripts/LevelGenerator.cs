@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -44,6 +45,7 @@ public class LevelGenerator : MonoBehaviour
     [SerializeField] private Material wallMaterial;
     [SerializeField] private Material coinMaterial;
     [SerializeField] private Material treasureMaterial;
+    [SerializeField] private string materialsFolderPath = "Assets/Materials";
 
     private GameObject player;
     private GameObject levelParent;
@@ -490,39 +492,6 @@ public class LevelGenerator : MonoBehaviour
             {
                 col.isTrigger = true;
             }
-
-            #if UNITY_EDITOR
-                private void OnValidate()
-                {
-                    bool changed = false;
-
-                    changed |= AutoAssignDefaultAsset(ref coinPrefab, "Assets/Models/Collectibles/coins/coin-4.fbx");
-                    changed |= AutoAssignDefaultAsset(ref treasurePrefab, "Assets/Models/Collectibles/chests/chest-1.fbx");
-                    changed |= AutoAssignDefaultAsset(ref defaultPlayerPrefab, "Assets/Models/Characters/character_root.fbx");
-
-                    if (changed)
-                    {
-                        EditorUtility.SetDirty(this);
-                    }
-                }
-
-                private bool AutoAssignDefaultAsset(ref GameObject targetField, string assetPath)
-                {
-                    if (targetField != null)
-                    {
-                        return false;
-                    }
-
-                    GameObject asset = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
-                    if (asset == null)
-                    {
-                        return false;
-                    }
-
-                    targetField = asset;
-                    return true;
-                }
-            #endif
         }
 
         // Ajouter le script Collectible le cas échéant
@@ -730,4 +699,190 @@ public class LevelGenerator : MonoBehaviour
         position = cellCenter + new Vector3(offsetX, 0f, offsetZ);
         return true;
     }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        bool changed = false;
+
+        changed |= EnsureMaterialsFolder();
+        changed |= AutoAssignDefaultAsset(ref coinPrefab, "Assets/Models/Collectibles/coins/coin-4.fbx");
+        changed |= AutoAssignDefaultAsset(ref treasurePrefab, "Assets/Models/Collectibles/chests/chest-1.fbx");
+        changed |= AutoAssignDefaultAsset(ref defaultPlayerPrefab, "Assets/Models/Characters/character_root.fbx");
+
+        changed |= EnsureMaterial(ref groundMaterial, "Ground", new Color(0.65f, 0.6f, 0.55f), "Ground");
+        changed |= EnsureMaterial(ref wallMaterial, "Wall", new Color(0.6f, 0.6f, 0.6f), "Wall");
+        changed |= EnsureMaterial(ref coinMaterial, "Coin", Color.yellow, "Coin");
+        changed |= EnsureMaterial(ref treasureMaterial, "Treasure", new Color(1f, 0.5f, 0f), "Treasure");
+
+        if (changed)
+        {
+            EditorUtility.SetDirty(this);
+        }
+    }
+
+    private bool AutoAssignDefaultAsset(ref GameObject targetField, string assetPath)
+    {
+        if (targetField != null)
+        {
+            return false;
+        }
+
+        GameObject asset = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+        if (asset == null)
+        {
+            return false;
+        }
+
+        targetField = asset;
+        return true;
+    }
+
+    private bool EnsureMaterialsFolder()
+    {
+        if (string.IsNullOrEmpty(materialsFolderPath))
+        {
+            materialsFolderPath = "Assets/Materials";
+        }
+
+        materialsFolderPath = materialsFolderPath.Replace("\\", "/");
+
+        if (AssetDatabase.IsValidFolder(materialsFolderPath))
+        {
+            return false;
+        }
+
+        string[] parts = materialsFolderPath.Split('/');
+        if (parts.Length == 0)
+        {
+            return false;
+        }
+
+        string currentPath = parts[0];
+        for (int i = 1; i < parts.Length; i++)
+        {
+            string nextPath = currentPath + "/" + parts[i];
+            if (!AssetDatabase.IsValidFolder(nextPath))
+            {
+                AssetDatabase.CreateFolder(currentPath, parts[i]);
+            }
+            currentPath = nextPath;
+        }
+
+        return true;
+    }
+
+    private bool EnsureMaterial(ref Material targetField, string defaultName, Color fallbackColor, string searchTerm)
+    {
+        if (targetField != null)
+        {
+            string assetPath = AssetDatabase.GetAssetPath(targetField);
+            if (string.IsNullOrEmpty(assetPath))
+            {
+                string newPath = GetUniqueMaterialPath(defaultName);
+                Material clone = Object.Instantiate(targetField);
+                clone.name = defaultName;
+                ApplyMaterialColor(clone, fallbackColor);
+                AssetDatabase.CreateAsset(clone, newPath);
+                targetField = clone;
+                return true;
+            }
+
+            assetPath = assetPath.Replace("\\", "/");
+            if (!assetPath.StartsWith(materialsFolderPath))
+            {
+                string fileName = Path.GetFileName(assetPath);
+                string targetPath = AssetDatabase.GenerateUniqueAssetPath(Path.Combine(materialsFolderPath, fileName).Replace("\\", "/"));
+                string error = AssetDatabase.MoveAsset(assetPath, targetPath);
+                if (!string.IsNullOrEmpty(error))
+                {
+                    Debug.LogWarning($"Impossible de déplacer {assetPath} vers {targetPath}. Création d'une copie: {error}");
+                    Material clone = Object.Instantiate(targetField);
+                    clone.name = defaultName;
+                    ApplyMaterialColor(clone, fallbackColor);
+                    targetPath = GetUniqueMaterialPath(defaultName);
+                    AssetDatabase.CreateAsset(clone, targetPath);
+                    targetField = clone;
+                }
+                return true;
+            }
+
+            return false;
+        }
+
+        string materialPath = FindMaterialPath(searchTerm);
+        if (!string.IsNullOrEmpty(materialPath))
+        {
+            Material material = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
+            if (material != null)
+            {
+                targetField = material;
+                return true;
+            }
+        }
+
+        string newAssetPath = GetUniqueMaterialPath(defaultName);
+        Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+        if (shader == null)
+        {
+            shader = Shader.Find("Standard");
+        }
+
+        Material created = new Material(shader)
+        {
+            name = defaultName
+        };
+        ApplyMaterialColor(created, fallbackColor);
+        AssetDatabase.CreateAsset(created, newAssetPath);
+        targetField = created;
+        return true;
+    }
+
+    private string FindMaterialPath(string searchTerm)
+    {
+        if (string.IsNullOrEmpty(materialsFolderPath) || !AssetDatabase.IsValidFolder(materialsFolderPath))
+        {
+            return null;
+        }
+
+        string filter = string.IsNullOrWhiteSpace(searchTerm) ? "t:Material" : $"t:Material {searchTerm}";
+        string[] guids = AssetDatabase.FindAssets(filter, new[] { materialsFolderPath });
+        if (guids.Length == 0 && filter != "t:Material")
+        {
+            guids = AssetDatabase.FindAssets("t:Material", new[] { materialsFolderPath });
+        }
+
+        if (guids.Length == 0)
+        {
+            return null;
+        }
+
+        return AssetDatabase.GUIDToAssetPath(guids[0]);
+    }
+
+    private string GetUniqueMaterialPath(string defaultName)
+    {
+        string fileName = string.IsNullOrWhiteSpace(defaultName) ? "Material" : defaultName;
+        string combined = Path.Combine(materialsFolderPath, fileName + ".mat");
+        combined = combined.Replace("\\", "/");
+        return AssetDatabase.GenerateUniqueAssetPath(combined);
+    }
+
+    private void ApplyMaterialColor(Material material, Color color)
+    {
+        if (material == null)
+        {
+            return;
+        }
+
+        if (material.HasProperty("_BaseColor"))
+        {
+            material.SetColor("_BaseColor", color);
+        }
+        else if (material.HasProperty("_Color"))
+        {
+            material.color = color;
+        }
+    }
+#endif
 }
