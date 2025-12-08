@@ -25,8 +25,6 @@ public class SceneSetup : MonoBehaviour
     /// </summary>
     private void SetupScene()
     {
-        Debug.Log("=== Initialisation de la Scène 3D ===");
-
         if (setupLighting)
             SetupLighting();
 
@@ -35,8 +33,6 @@ public class SceneSetup : MonoBehaviour
 
         if (setupGameManager)
             SetupGameManager();
-
-        Debug.Log("=== Configuration de la Scène Terminée ===");
     }
 
     /// <summary>
@@ -56,7 +52,6 @@ public class SceneSetup : MonoBehaviour
             lightObj.transform.eulerAngles = new Vector3(50, -30, 0);
         }
 
-        Debug.Log("✓ Éclairage configuré");
     }
 
     /// <summary>
@@ -85,7 +80,6 @@ public class SceneSetup : MonoBehaviour
         }
         rig.SetMode(CameraRigController.CameraMode.ThirdPerson, true);
 
-        Debug.Log("✓ Caméra configurée");
     }
 
     /// <summary>
@@ -99,11 +93,6 @@ public class SceneSetup : MonoBehaviour
         {
             GameObject gmObj = new GameObject("GameManager");
             gameManager = gmObj.AddComponent<GameManager>();
-            Debug.Log("✓ GameManager créé");
-        }
-        else
-        {
-            Debug.Log("✓ GameManager trouvé");
         }
     }
 }

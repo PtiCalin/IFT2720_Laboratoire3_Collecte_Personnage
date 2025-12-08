@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -40,7 +41,7 @@ public class LevelGenerator : MonoBehaviour
     [SerializeField] private float wallHeight = 2f;
     [SerializeField] private float wallThickness = 0.5f;
     
-    [Header("Matériaux (Optionnel)")]
+    [Header("Matériaux et Textures")]
     [SerializeField] private Material wallMaterial;
     [SerializeField] private Material coinMaterial;
     [SerializeField] private Material treasureMaterial;
@@ -63,6 +64,9 @@ public class LevelGenerator : MonoBehaviour
     private Vector2Int entranceCell;
     private Vector2Int exitCell;
     private bool hasEntranceAndExit;
+
+    private const BindingFlags CollectibleFieldFlags = BindingFlags.NonPublic | BindingFlags.Instance;
+    private static readonly Dictionary<string, FieldInfo> CollectibleFieldCache = new Dictionary<string, FieldInfo>(5);
 
     private enum MazeDirection
     {
@@ -461,218 +465,247 @@ public class LevelGenerator : MonoBehaviour
     private void CreateCollectibles()
     {
         GameObject collectiblesParent = new GameObject("Collectibles");
-        collectiblesParent.transform.parent = levelParent.transform;
+        collectiblesParent.transform.SetParent(levelParent.transform, true);
 
         EnsureSpawnCellPool();
-        int coinsPlaced = 0;
-        int treasuresPlaced = 0;
-        
-        // Créer les pièces
-        for (int i = 0; i < numberOfCoins; i++)
-        {
-            if (!TryReserveSpawnPosition(1f, 0.35f, out Vector3 position))
-            {
-                Debug.LogWarning("Impossible de placer toutes les pièces : plus de cellules disponibles sans collision.");
-                break;
-            }
 
-            CreateCoin(position, collectiblesParent);
-            coinsPlaced++;
-        }
-        
-        // Créer les trésors
-        for (int i = 0; i < numberOfTreasures; i++)
-        {
-            if (!TryReserveSpawnPosition(1.5f, 0.45f, out Vector3 position))
-            {
-                Debug.LogWarning("Impossible de placer tous les trésors : plus de cellules disponibles sans collision.");
-                break;
-            }
+        int coinsPlaced = SpawnCollectibleBatch(
+            numberOfCoins,
+            1f,
+            0.35f,
+            collectiblesParent,
+            "pièces",
+            coinPrefab,
+            "Coin",
+            PrimitiveType.Sphere,
+            new Vector3(0.5f, 0.5f, 0.5f),
+            Color.yellow,
+            true,
+            coinMaterial,
+            false,
+            coinPointsValue,
+            100f,
+            2f,
+            0.3f);
 
-            CreateTreasure(position, collectiblesParent);
-            treasuresPlaced++;
-        }
-        
+        int treasuresPlaced = SpawnCollectibleBatch(
+            numberOfTreasures,
+            1.5f,
+            0.45f,
+            collectiblesParent,
+            "trésors",
+            treasurePrefab,
+            "Treasure",
+            PrimitiveType.Cube,
+            new Vector3(0.7f, 0.7f, 0.7f),
+            new Color(1f, 0.5f, 0f),
+            false,
+            treasureMaterial,
+            true,
+            treasurePointsValue,
+            80f,
+            1.5f,
+            0.4f);
+
         Debug.Log($"{coinsPlaced} pièces et {treasuresPlaced} trésors créés");
     }
 
-    /// <summary>
-    /// Crée une pièce collectible
-    /// </summary>
-    private void CreateCoin(Vector3 position, GameObject parent)
+    private int SpawnCollectibleBatch(
+        int desiredCount,
+        float spawnHeight,
+        float clearance,
+        GameObject parent,
+        string debugLabel,
+        GameObject prefab,
+        string fallbackName,
+        PrimitiveType fallbackPrimitive,
+        Vector3 fallbackScale,
+        Color fallbackColor,
+        bool preferSphereCollider,
+        Material overrideMaterial,
+        bool isTreasure,
+        int pointsValue,
+        float rotationSpeed,
+        float bobSpeed,
+        float bobHeight)
     {
-        GameObject coin;
-        bool usedFallback = coinPrefab == null;
+        if (desiredCount <= 0)
+        {
+            return 0;
+        }
+
+        int placed = 0;
+
+        for (int i = 0; i < desiredCount; i++)
+        {
+            if (!TryReserveSpawnPosition(spawnHeight, clearance, out Vector3 position))
+            {
+                if (placed < desiredCount)
+                {
+                    Debug.LogWarning($"Impossible de placer toutes les {debugLabel} : plus de cellules disponibles sans collision.");
+                }
+                break;
+            }
+
+            GameObject collectibleObject = PrepareCollectible(
+                position,
+                parent,
+                prefab,
+                fallbackName,
+                fallbackPrimitive,
+                fallbackScale,
+                overrideMaterial,
+                fallbackColor,
+                preferSphereCollider);
+
+            Collectible collectibleComponent = EnsureCollectibleComponent(collectibleObject);
+            ConfigureCollectibleComponent(collectibleComponent, isTreasure, pointsValue, rotationSpeed, bobSpeed, bobHeight);
+
+            placed++;
+        }
+
+        return placed;
+    }
+
+    private GameObject PrepareCollectible(
+        Vector3 position,
+        GameObject parent,
+        GameObject prefab,
+        string fallbackName,
+        PrimitiveType fallbackPrimitive,
+        Vector3 fallbackScale,
+        Material overrideMaterial,
+        Color fallbackColor,
+        bool preferSphereCollider)
+    {
+        bool usedFallback = prefab == null;
+        GameObject instance;
 
         if (!usedFallback)
         {
-            coin = Instantiate(coinPrefab, position, Quaternion.identity, parent.transform);
-            coin.name = coinPrefab.name;
+            instance = Instantiate(prefab, position, Quaternion.identity, parent.transform);
+            instance.name = prefab.name;
         }
         else
         {
-            coin = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            coin.name = "Coin";
-            coin.transform.SetParent(parent.transform, true);
-            coin.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
+            instance = GameObject.CreatePrimitive(fallbackPrimitive);
+            instance.name = fallbackName;
+            instance.transform.SetParent(parent.transform, true);
+            instance.transform.localScale = fallbackScale;
         }
 
-        if (coin.transform.parent != parent.transform)
+        if (instance.transform.parent != parent.transform)
         {
-            coin.transform.SetParent(parent.transform, true);
+            instance.transform.SetParent(parent.transform, true);
         }
-        coin.transform.position = position;
 
-        // Configurer les colliders comme triggers
-        Collider[] colliders = coin.GetComponentsInChildren<Collider>();
+        instance.transform.position = position;
+
+        EnsureCollectibleCollider(instance, preferSphereCollider);
+        ApplyCollectibleMaterial(instance, overrideMaterial, fallbackColor, usedFallback);
+
+        return instance;
+    }
+
+    private static void EnsureCollectibleCollider(GameObject root, bool preferSphereCollider)
+    {
+        if (root == null)
+        {
+            return;
+        }
+
+        Collider[] colliders = root.GetComponentsInChildren<Collider>();
         if (colliders.Length == 0)
         {
-            Collider generated = coin.AddComponent<SphereCollider>();
-            generated.isTrigger = true;
-        }
-        else
-        {
-            foreach (Collider col in colliders)
-            {
-                col.isTrigger = true;
-            }
+            Collider created = preferSphereCollider ? root.AddComponent<SphereCollider>() : root.AddComponent<BoxCollider>();
+            created.isTrigger = true;
+            return;
         }
 
-        // Ajouter le script Collectible le cas échéant
-        Collectible collectible = coin.GetComponent<Collectible>();
-        if (collectible == null)
+        foreach (Collider collider in colliders)
         {
-            collectible = coin.AddComponent<Collectible>();
-        }
-
-        // Utiliser la réflexion pour définir les champs privés sérialisés
-        var type = typeof(Collectible);
-        type.GetField("isTreasure", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-            ?.SetValue(collectible, false);
-        type.GetField("pointsValue", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-            ?.SetValue(collectible, coinPointsValue);
-        type.GetField("rotationSpeed", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-            ?.SetValue(collectible, 100f);
-        type.GetField("bobSpeed", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-            ?.SetValue(collectible, 2f);
-        type.GetField("bobHeight", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-            ?.SetValue(collectible, 0.3f);
-
-        // Appliquer le matériau si disponible
-        if (coinMaterial != null)
-        {
-            foreach (Renderer renderer in coin.GetComponentsInChildren<Renderer>())
-            {
-                renderer.material = coinMaterial;
-            }
-        }
-        else if (usedFallback)
-        {
-            Renderer renderer = coin.GetComponent<Renderer>();
-            if (renderer != null)
-            {
-                renderer.material.color = Color.yellow;
-            }
+            collider.isTrigger = true;
         }
     }
 
-    /// <summary>
-    /// Crée un trésor collectible
-    /// </summary>
-    private void CreateTreasure(Vector3 position, GameObject parent)
+    private void ApplyCollectibleMaterial(GameObject root, Material materialOverride, Color fallbackColor, bool fallbackUsed)
     {
-        GameObject treasure;
-        bool usedFallback = treasurePrefab == null;
-
-        if (!usedFallback)
+        if (root == null)
         {
-            treasure = Instantiate(treasurePrefab, position, Quaternion.identity, parent.transform);
-            treasure.name = treasurePrefab.name;
-        }
-        else
-        {
-            treasure = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            treasure.name = "Treasure";
-            treasure.transform.SetParent(parent.transform, true);
-            treasure.transform.localScale = new Vector3(0.7f, 0.7f, 0.7f);
+            return;
         }
 
-        if (treasure.transform.parent != parent.transform)
+        if (materialOverride != null)
         {
-            treasure.transform.SetParent(parent.transform, true);
-        }
-        treasure.transform.position = position;
-
-        // Configurer les colliders comme triggers
-        Collider[] colliders = treasure.GetComponentsInChildren<Collider>();
-        if (colliders.Length == 0)
-        {
-            Collider generated = treasure.AddComponent<BoxCollider>();
-            generated.isTrigger = true;
-        }
-        else
-        {
-            foreach (Collider col in colliders)
+            foreach (Renderer renderer in root.GetComponentsInChildren<Renderer>())
             {
-                col.isTrigger = true;
+                renderer.material = materialOverride;
             }
+            return;
         }
 
-        // Ajouter le script Collectible le cas échéant
-        Collectible collectible = treasure.GetComponent<Collectible>();
-        if (collectible == null)
+        if (!fallbackUsed)
         {
-            collectible = treasure.AddComponent<Collectible>();
+            return;
         }
 
-        // Utiliser la réflexion pour définir les champs privés sérialisés
-        var type = typeof(Collectible);
-        type.GetField("isTreasure", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-            ?.SetValue(collectible, true);
-        type.GetField("pointsValue", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-            ?.SetValue(collectible, treasurePointsValue);
-        type.GetField("rotationSpeed", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-            ?.SetValue(collectible, 80f);
-        type.GetField("bobSpeed", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-            ?.SetValue(collectible, 1.5f);
-        type.GetField("bobHeight", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-            ?.SetValue(collectible, 0.4f);
-
-        // Appliquer le matériau si disponible
-        if (treasureMaterial != null)
+        Renderer fallbackRenderer = root.GetComponent<Renderer>();
+        if (fallbackRenderer != null)
         {
-            foreach (Renderer renderer in treasure.GetComponentsInChildren<Renderer>())
-            {
-                renderer.material = treasureMaterial;
-            }
-        }
-        else if (usedFallback)
-        {
-            Renderer renderer = treasure.GetComponent<Renderer>();
-            if (renderer != null)
-            {
-                renderer.material.color = new Color(1f, 0.5f, 0f);
-            }
+            fallbackRenderer.material.color = fallbackColor;
         }
     }
 
-    /// <summary>
-    /// Génère une position aléatoire dans les limites du labyrinthe
-    /// </summary>
-    private Vector3 GetRandomPositionInMaze(float height)
+    private Collectible EnsureCollectibleComponent(GameObject root)
     {
-        float spacing = Mathf.Max(cellSize, 1f);
-        float width = Mathf.Max(mazeColumns, 2) * spacing;
-        float depth = Mathf.Max(mazeRows, 2) * spacing;
+        if (root == null)
+        {
+            return null;
+        }
 
-        float halfWidth = width * 0.5f;
-        float halfDepth = depth * 0.5f;
-        float marginUpperBound = Mathf.Max(Mathf.Min(halfWidth, halfDepth) - 0.1f, 0.1f);
-        float margin = Mathf.Clamp(spacing * 0.5f, 0.1f, marginUpperBound);
+        Collectible collectible = root.GetComponent<Collectible>();
+        if (collectible == null)
+        {
+            collectible = root.AddComponent<Collectible>();
+        }
 
-        float x = Random.Range(-halfWidth + margin, halfWidth - margin);
-        float z = Random.Range(-halfDepth + margin, halfDepth - margin);
-        return new Vector3(x, height, z);
+        return collectible;
+    }
+
+    private void ConfigureCollectibleComponent(
+        Collectible collectible,
+        bool isTreasure,
+        int pointsValue,
+        float rotationSpeed,
+        float bobSpeed,
+        float bobHeight)
+    {
+        if (collectible == null)
+        {
+            return;
+        }
+
+        SetCollectibleField("isTreasure", collectible, isTreasure);
+        SetCollectibleField("pointsValue", collectible, pointsValue);
+        SetCollectibleField("rotationSpeed", collectible, rotationSpeed);
+        SetCollectibleField("bobSpeed", collectible, bobSpeed);
+        SetCollectibleField("bobHeight", collectible, bobHeight);
+    }
+
+    private static void SetCollectibleField(string fieldName, Collectible target, object value)
+    {
+        if (target == null || string.IsNullOrEmpty(fieldName))
+        {
+            return;
+        }
+
+        if (!CollectibleFieldCache.TryGetValue(fieldName, out FieldInfo fieldInfo) || fieldInfo == null)
+        {
+            fieldInfo = typeof(Collectible).GetField(fieldName, CollectibleFieldFlags);
+            CollectibleFieldCache[fieldName] = fieldInfo;
+        }
+
+        fieldInfo?.SetValue(target, value);
     }
 
     private void ReserveCell(int row, int column)

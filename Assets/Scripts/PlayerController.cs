@@ -85,7 +85,6 @@ public class PlayerController : MonoBehaviour
         if (collision.gameObject.CompareTag("Ground"))
         {
             isGrounded = true;
-            Debug.Log("Joueur a atterri sur le sol");
         }
     }
 
@@ -102,7 +101,6 @@ public class PlayerController : MonoBehaviour
         if (collision.gameObject.CompareTag("Ground"))
         {
             isGrounded = false;
-            Debug.Log("Joueur a quitté le sol");
         }
     }
 
