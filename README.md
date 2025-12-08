@@ -209,11 +209,21 @@ IFT2720_Laboratoire3_Collecte_Personnage/
 
 // PlayerController
 
-public float moveSpeed;
-public float jumpForce;
+[SerializeField] private float maxSpeed;
+[SerializeField] private float acceleration;
+[SerializeField] private float airControlMultiplier;
+[SerializeField] private float groundedDrag;
+[SerializeField] private float airDrag;
 [SerializeField] private float rotationSpeed;
 [SerializeField] private Transform character;
-[SerializeField] private bool allowDoubleJump;
+[SerializeField] private float jumpForce;
+[SerializeField] private int maxJumps; // 2 = double saut
+[SerializeField] private bool resetVerticalVelocityOnJump;
+[SerializeField] private float groundCheckDistance;
+[SerializeField] private float groundCheckRadius;
+[SerializeField] private float groundCheckOffset;
+[SerializeField] private LayerMask groundLayers;
+[SerializeField] private Transform cameraTransform;
 
 // Collectibles
 

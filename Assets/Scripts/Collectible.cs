@@ -16,6 +16,20 @@ public class Collectible : MonoBehaviour
     private Vector3 startPosition;
     private bool isCollected = false;
 
+    /// <summary>
+    /// Configure collectible parameters at runtime (used by level generator).
+    /// </summary>
+    public void Configure(bool treasure, int points, float rotation, float bobSpeedValue, float bobHeightValue)
+    {
+        isTreasure = treasure;
+        pointsValue = points;
+        rotationSpeed = rotation;
+        bobSpeed = bobSpeedValue;
+        bobHeight = bobHeightValue;
+        startPosition = transform.position;
+        isCollected = false;
+    }
+
     private void Start()
     {
         // Store initial position for bobbing animation
@@ -55,12 +69,6 @@ public class Collectible : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// OnTriggerStay : Appelée chaque frame où un objet reste à l'intérieur du volume
-    /// d'un déclencheur. Utile pour des effets continus dans une zone, comme une zone
-    /// de guérison, une zone de ralentissement, ou pour détecter la présence prolongée.
-    /// </summary>
-    /// <param name="other">Le Collider de l'objet qui reste dans la zone de déclenchement</param>
     private void CollectItem()
     {
         // Mark as collected

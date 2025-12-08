@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Reflection;
 using UnityEngine;
 
 public class LevelGenerator : MonoBehaviour
@@ -39,9 +38,6 @@ public class LevelGenerator : MonoBehaviour
     private bool[,] occupiedCells;
     private List<Vector2Int> availableSpawnCells;
     private Vector2Int entranceCell, exitCell;
-
-    private const BindingFlags CollectibleFieldFlags = BindingFlags.NonPublic | BindingFlags.Instance;
-    private static readonly Dictionary<string, FieldInfo> CollectibleFieldCache = new Dictionary<string, FieldInfo>(5);
 
     private enum MazeDirection { North = 0, South, East, West }
 
@@ -262,8 +258,8 @@ public class LevelGenerator : MonoBehaviour
 
         // Setup controller
         PlayerController controller = player.GetComponent<PlayerController>() ?? player.AddComponent<PlayerController>();
-        controller.moveSpeed = playerMoveSpeed;
-        controller.jumpForce = playerJumpForce;
+        controller.MaxSpeed = playerMoveSpeed;
+        controller.JumpForce = playerJumpForce;
 
         // Link camera
         var cameraRig = FindFirstObjectByType<CameraRigController>(FindObjectsInactive.Include);
@@ -308,11 +304,7 @@ public class LevelGenerator : MonoBehaviour
                 coin.GetComponent<Renderer>().material.color = Color.yellow;
 
             Collectible c = coin.GetComponent<Collectible>() ?? coin.AddComponent<Collectible>();
-            SetCollectibleField("isTreasure", c, false);
-            SetCollectibleField("pointsValue", c, coinPointsValue);
-            SetCollectibleField("rotationSpeed", c, 100f);
-            SetCollectibleField("bobSpeed", c, 2f);
-            SetCollectibleField("bobHeight", c, 0.3f);
+            c.Configure(false, coinPointsValue, 100f, 2f, 0.3f);
             coinPlaced++;
         }
 
@@ -342,11 +334,7 @@ public class LevelGenerator : MonoBehaviour
                 treasure.GetComponent<Renderer>().material.color = new Color(1f, 0.5f, 0f);
 
             Collectible c = treasure.GetComponent<Collectible>() ?? treasure.AddComponent<Collectible>();
-            SetCollectibleField("isTreasure", c, true);
-            SetCollectibleField("pointsValue", c, treasurePointsValue);
-            SetCollectibleField("rotationSpeed", c, 80f);
-            SetCollectibleField("bobSpeed", c, 1.5f);
-            SetCollectibleField("bobHeight", c, 0.4f);
+            c.Configure(true, treasurePointsValue, 80f, 1.5f, 0.4f);
             treasurePlaced++;
         }
 
@@ -354,16 +342,6 @@ public class LevelGenerator : MonoBehaviour
             Debug.LogWarning("Aucune pièce ni trésor n'a été généré. Vérifiez le nombre demandé et les cellules disponibles.");
         else
             Debug.Log($"{coinPlaced} pièces et {treasurePlaced} trésors créés");
-    }
-
-    private static void SetCollectibleField(string fieldName, Collectible target, object value)
-    {
-        if (!CollectibleFieldCache.TryGetValue(fieldName, out FieldInfo fieldInfo))
-        {
-            fieldInfo = typeof(Collectible).GetField(fieldName, CollectibleFieldFlags);
-            CollectibleFieldCache[fieldName] = fieldInfo;
-        }
-        fieldInfo?.SetValue(target, value);
     }
 
     private void ReserveCell(int row, int col)

@@ -4,7 +4,7 @@ using UnityEngine.InputSystem;
 /// <summary>
 /// Rigidbody-based character controller with acceleration, speed cap, air control and jump stack.
 /// </summary>
-public class PlayerController : MonoBehaviour
+public class Player : MonoBehaviour
 {
     [Header("Movement")]
     [SerializeField, Min(0f)] private float maxSpeed = 6f;
