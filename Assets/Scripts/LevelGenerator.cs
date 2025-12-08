@@ -41,12 +41,10 @@ public class LevelGenerator : MonoBehaviour
     [SerializeField] private float wallThickness = 0.5f;
     
     [Header("Matériaux (Optionnel)")]
-    [SerializeField] private Texture2D groundTexture;
-    [SerializeField] private Texture2D wallTexture;
-    [SerializeField] private Texture2D coinTexture;
-    [SerializeField] private string groundTextureSearchTerm = "Poliigon_WoodFloorAsh_4186";
-    [SerializeField] private string wallTextureSearchTerm = "Poliigon_BrickWallReclaimed_8320";
-    [SerializeField] private string coinTextureSearchTerm = "Poliigon_MetalBronzeWorn_7248";
+    [SerializeField] private Material wallMaterial;
+    [SerializeField] private Material coinMaterial;
+    [SerializeField] private Material treasureMaterial;
+    [SerializeField] private string materialsFolderPath = "Assets/Materials";
 
     private GameObject player;
     private GameObject levelParent;
