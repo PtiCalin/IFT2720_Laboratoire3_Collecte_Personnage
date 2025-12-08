@@ -41,11 +41,12 @@ public class LevelGenerator : MonoBehaviour
     [SerializeField] private float wallThickness = 0.5f;
     
     [Header("Matériaux (Optionnel)")]
-    [SerializeField] private Material groundMaterial;
-    [SerializeField] private Material wallMaterial;
-    [SerializeField] private Material coinMaterial;
-    [SerializeField] private Material treasureMaterial;
-    [SerializeField] private string materialsFolderPath = "Assets/Materials";
+    [SerializeField] private Texture2D groundTexture;
+    [SerializeField] private Texture2D wallTexture;
+    [SerializeField] private Texture2D coinTexture;
+    [SerializeField] private string groundTextureSearchTerm = "Poliigon_WoodFloorAsh_4186";
+    [SerializeField] private string wallTextureSearchTerm = "Poliigon_BrickWallReclaimed_8320";
+    [SerializeField] private string coinTextureSearchTerm = "Poliigon_MetalBronzeWorn_7248";
 
     private GameObject player;
     private GameObject levelParent;
@@ -710,9 +711,9 @@ public class LevelGenerator : MonoBehaviour
         changed |= AutoAssignDefaultAsset(ref treasurePrefab, "Assets/Models/Collectibles/chests/chest-1.fbx");
         changed |= AutoAssignDefaultAsset(ref defaultPlayerPrefab, "Assets/Models/Characters/character_root.fbx");
 
-        changed |= EnsureMaterial(ref groundMaterial, "Ground", new Color(0.65f, 0.6f, 0.55f), "Ground");
-        changed |= EnsureMaterial(ref wallMaterial, "Wall", new Color(0.6f, 0.6f, 0.6f), "Wall");
-        changed |= EnsureMaterial(ref coinMaterial, "Coin", Color.yellow, "Coin");
+        changed |= EnsureMaterial(ref groundMaterial, "Ground", new Color(0.65f, 0.6f, 0.55f), "Ground", groundTexture, groundTextureSearchTerm);
+        changed |= EnsureMaterial(ref wallMaterial, "Wall", new Color(0.6f, 0.6f, 0.6f), "Wall", wallTexture, wallTextureSearchTerm);
+        changed |= EnsureMaterial(ref coinMaterial, "Coin", Color.yellow, "Coin", coinTexture, coinTextureSearchTerm);
         changed |= EnsureMaterial(ref treasureMaterial, "Treasure", new Color(1f, 0.5f, 0f), "Treasure");
 
         if (changed)
@@ -772,8 +773,16 @@ public class LevelGenerator : MonoBehaviour
         return true;
     }
 
-    private bool EnsureMaterial(ref Material targetField, string defaultName, Color fallbackColor, string searchTerm)
+    private bool EnsureMaterial(
+        ref Material targetField,
+        string defaultName,
+        Color fallbackColor,
+        string searchTerm,
+        Texture2D preferredTexture = null,
+        string textureSearchTerm = null)
     {
+        bool modified = false;
+
         if (targetField != null)
         {
             string assetPath = AssetDatabase.GetAssetPath(targetField);
@@ -783,6 +792,7 @@ public class LevelGenerator : MonoBehaviour
                 Material clone = Object.Instantiate(targetField);
                 clone.name = defaultName;
                 ApplyMaterialColor(clone, fallbackColor);
+                ApplyMaterialTexture(clone, preferredTexture, textureSearchTerm ?? searchTerm);
                 AssetDatabase.CreateAsset(clone, newPath);
                 targetField = clone;
                 return true;
@@ -800,14 +810,20 @@ public class LevelGenerator : MonoBehaviour
                     Material clone = Object.Instantiate(targetField);
                     clone.name = defaultName;
                     ApplyMaterialColor(clone, fallbackColor);
+                    ApplyMaterialTexture(clone, preferredTexture, textureSearchTerm ?? searchTerm);
                     targetPath = GetUniqueMaterialPath(defaultName);
                     AssetDatabase.CreateAsset(clone, targetPath);
                     targetField = clone;
                 }
-                return true;
+                modified = true;
             }
 
-            return false;
+            if (ApplyMaterialTexture(targetField, preferredTexture, textureSearchTerm ?? searchTerm))
+            {
+                modified = true;
+            }
+
+            return modified;
         }
 
         string materialPath = FindMaterialPath(searchTerm);
@@ -817,6 +833,10 @@ public class LevelGenerator : MonoBehaviour
             if (material != null)
             {
                 targetField = material;
+                if (ApplyMaterialTexture(targetField, preferredTexture, textureSearchTerm ?? searchTerm))
+                {
+                    modified = true;
+                }
                 return true;
             }
         }
@@ -833,6 +853,7 @@ public class LevelGenerator : MonoBehaviour
             name = defaultName
         };
         ApplyMaterialColor(created, fallbackColor);
+        ApplyMaterialTexture(created, preferredTexture, textureSearchTerm ?? searchTerm);
         AssetDatabase.CreateAsset(created, newAssetPath);
         targetField = created;
         return true;
@@ -860,6 +881,42 @@ public class LevelGenerator : MonoBehaviour
         return AssetDatabase.GUIDToAssetPath(guids[0]);
     }
 
+    private string FindTextureAsset(string searchTerm)
+    {
+        if (string.IsNullOrEmpty(materialsFolderPath) || !AssetDatabase.IsValidFolder(materialsFolderPath))
+        {
+            return null;
+        }
+
+        string filter = string.IsNullOrWhiteSpace(searchTerm) ? "t:Texture2D" : $"t:Texture2D {searchTerm}";
+        string[] guids = AssetDatabase.FindAssets(filter, new[] { materialsFolderPath });
+        if (guids.Length == 0 && filter != "t:Texture2D")
+        {
+            guids = AssetDatabase.FindAssets("t:Texture2D", new[] { materialsFolderPath });
+        }
+
+        if (guids.Length == 0)
+        {
+            return null;
+        }
+
+        string bestPath = null;
+        foreach (string guid in guids)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+            string fileName = Path.GetFileNameWithoutExtension(path)?.ToLowerInvariant();
+            if (fileName != null && (fileName.Contains("basecolor") || fileName.Contains("albedo")))
+            {
+                bestPath = path;
+                break;
+            }
+
+            bestPath ??= path;
+        }
+
+        return bestPath;
+    }
+
     private string GetUniqueMaterialPath(string defaultName)
     {
         string fileName = string.IsNullOrWhiteSpace(defaultName) ? "Material" : defaultName;
@@ -883,6 +940,43 @@ public class LevelGenerator : MonoBehaviour
         {
             material.color = color;
         }
+    }
+
+    private bool ApplyMaterialTexture(Material material, Texture2D preferredTexture, string searchTerm)
+    {
+        if (material == null)
+        {
+            return false;
+        }
+
+        Texture2D texture = preferredTexture;
+        if (texture == null && !string.IsNullOrWhiteSpace(searchTerm))
+        {
+            string texturePath = FindTextureAsset(searchTerm);
+            if (!string.IsNullOrEmpty(texturePath))
+            {
+                texture = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
+            }
+        }
+
+        if (texture == null)
+        {
+            return false;
+        }
+
+        bool changed = false;
+        if (material.HasProperty("_BaseMap") && material.GetTexture("_BaseMap") != texture)
+        {
+            material.SetTexture("_BaseMap", texture);
+            changed = true;
+        }
+        else if (material.HasProperty("_MainTex") && material.mainTexture != texture)
+        {
+            material.mainTexture = texture;
+            changed = true;
+        }
+
+        return changed;
     }
 #endif
 }
