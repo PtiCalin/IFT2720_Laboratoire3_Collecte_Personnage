@@ -71,22 +71,12 @@ public class SceneSetup : MonoBehaviour
             GameObject cameraObj = new GameObject("Main Camera");
             mainCamera = cameraObj.AddComponent<Camera>();
             cameraObj.AddComponent<AudioListener>();
-            cameraObj.tag = "MainCamera";
         }
 
-        if (mainCamera.transform.parent == null)
-        {
-            mainCamera.transform.position = new Vector3(0f, 2f, -6f);
-            mainCamera.transform.rotation = Quaternion.identity;
-        }
-
-        mainCamera.backgroundColor = new Color(0.2f, 0.3f, 0.4f);
-
-        ThirdPersonCamera thirdPerson = mainCamera.GetComponent<ThirdPersonCamera>();
-        if (thirdPerson == null)
-        {
-            thirdPerson = mainCamera.gameObject.AddComponent<ThirdPersonCamera>();
-        }
+        // Positionner la caméra pour une bonne vue du jeu
+        mainCamera.transform.position = new Vector3(0, 20, -15);
+        mainCamera.transform.eulerAngles = new Vector3(45, 0, 0);
+        mainCamera.backgroundColor = new Color(0.2f, 0.3f, 0.4f); // Bleu ciel
 
         Debug.Log("✓ Caméra configurée");
     }

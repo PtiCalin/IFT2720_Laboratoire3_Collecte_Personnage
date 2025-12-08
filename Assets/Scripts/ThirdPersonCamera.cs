@@ -4,7 +4,7 @@ public class ThirdPersonCamera : MonoBehaviour
 {
     [SerializeField] private Transform target;
     [SerializeField] private Vector3 targetOffset = new Vector3(0f, 1.6f, 0f);
-    [SerializeField] private float distance = 6f;
+    [SerializeField, Min(0.1f)] private float distance = 6f;
     [SerializeField] private float rotationSpeed = 120f;
     [SerializeField] private float verticalSensitivity = 0.8f;
     [SerializeField] private float minPitch = -30f;
@@ -16,14 +16,26 @@ public class ThirdPersonCamera : MonoBehaviour
     private float yaw;
     private float pitch;
 
-    private void Start()
+    private void OnEnable()
     {
         if (lockCursor)
         {
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
         }
+    }
 
+    private void OnDisable()
+    {
+        if (lockCursor)
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+    }
+
+    private void Start()
+    {
         if (target == null)
         {
             GameObject candidate = GameObject.FindWithTag("Player");
@@ -71,6 +83,18 @@ public class ThirdPersonCamera : MonoBehaviour
     public void SetTarget(Transform newTarget)
     {
         target = newTarget;
+    }
+
+    public void SnapToTarget()
+    {
+        if (target == null)
+        {
+            return;
+        }
+
+        Quaternion desiredRotation = Quaternion.Euler(pitch, yaw, 0f);
+        transform.position = target.position + targetOffset - desiredRotation * Vector3.forward * distance;
+        transform.rotation = desiredRotation;
     }
 
     private float ClampPitch(float rawPitch)

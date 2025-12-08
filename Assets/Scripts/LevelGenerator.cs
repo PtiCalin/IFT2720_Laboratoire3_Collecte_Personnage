@@ -48,6 +48,9 @@ public class LevelGenerator : MonoBehaviour
     private float cachedCellHalf;
     private float cachedOffsetX;
     private float cachedOffsetZ;
+    private Vector3 cachedMazeCenter;
+    private float cachedMazeWidth;
+    private float cachedMazeDepth;
 
     private enum MazeDirection
     {
@@ -110,6 +113,18 @@ public class LevelGenerator : MonoBehaviour
         cachedSpacing = spacing;
         mazeLayout = GenerateMazeLayout(rows, columns);
         BuildMazeGeometry(mazeParent, mazeLayout, rows, columns, spacing);
+
+        cachedMazeWidth = columns * spacing;
+        cachedMazeDepth = rows * spacing;
+        cachedMazeCenter = GetCellCenterPosition(rows / 2, columns / 2);
+
+        BirdsEyeCamera birdsEye = FindFirstObjectByType<BirdsEyeCamera>(FindObjectsInactive.Include);
+        if (birdsEye != null)
+        {
+            birdsEye.SetCenter(cachedMazeCenter);
+            birdsEye.ConfigureBounds(cachedMazeWidth, cachedMazeDepth);
+            birdsEye.SnapToCenter();
+        }
 
         Debug.Log($"Labyrinthe généré ({rows}x{columns}) avec un tracé aléatoire.");
     }
@@ -436,6 +451,13 @@ public class LevelGenerator : MonoBehaviour
             renderer.material.color = Color.yellow;
         }
     }
+
+            ThirdPersonCamera thirdPerson = FindFirstObjectByType<ThirdPersonCamera>(FindObjectsInactive.Include);
+            if (thirdPerson != null)
+            {
+                thirdPerson.SetTarget(player.transform);
+                thirdPerson.SnapToTarget();
+            }
 
     /// <summary>
     /// Crée un trésor collectible

@@ -107,13 +107,11 @@ Le laboratoire met l'accent sur la compréhension et l'application pratique des 
 - 🎛️ **Paramètres exposés** - tous les réglages accessibles via l'Inspector Unity
 - 📊 **Headers organisés** - interface Inspector claire avec sections (Movement, Advanced, Ground Check, etc.)
 
-### Caméra Third Person Orbitale
-
-- 🎥 **Suivi dynamique** : la caméra s'accroche automatiquement au personnage généré.
-- 🔄 **Rotation 360°** : orbiting complet via les axes `Mouse X` / `Mouse Y` avec limites de pitch configurables.
-- 🧎 **Offset personnalisable** : distance et hauteur ajustables pour adapter le champ de vision.
-- 🧘 **Lissage flexible** : interpolation indépendante de la position et de l'orientation pour éviter les mouvements brusques.
-- 🔒 **Gestion du curseur** : verrouillage optionnel de la souris pour une expérience type TPS.
+#### Caméra Third-Person & Vue Aérienne
+- 🎥 **Caméra principale** orbitale verrouillée sur le joueur avec distance, offset et lissages configurables.
+- 🦅 **Vue aérienne** orthographique centrée automatiquement sur le labyrinthe pour une supervision rapide.
+- 🔁 **Basculer en un clic** (`Tab`) entre les deux angles pour analyser la progression ou explorer en détail.
+- 🖱️ **Commandes souris** pour pivoter autour du personnage tout en conservant des limites de pitch configurables.
 
 ## 🎮 Exigences du Laboratoire
 
@@ -208,7 +206,8 @@ Le projet inclut également des fonctionnalités avancées :
 | Déplacement Droite | `D` ou `→` |
 | Sauter | `Espace` |
 | Double Saut | `Espace` (dans les airs) |
-| Rotation Caméra | Souris (Mouvement) |
+| Rotation Caméra | Souris (mouvement) |
+| Changer de Vue | `Tab` |
 
 ### Objectif
 
@@ -222,6 +221,7 @@ Le projet inclut également des fonctionnalités avancées :
 - Le **jump buffering** permet d'appuyer sur saut un peu avant d'atterrir
 - Relâchez rapidement la barre d'espace pour des sauts courts et précis
 - Le double saut peut sauver d'une chute !
+- Appuyez sur **Tab** pour alterner entre la vue third-person et la vue aérienne.
 
 ## 📁 Architecture du Projet
 
@@ -259,7 +259,7 @@ Le niveau principal (`JeuCollecte.unity`) est généré dynamiquement par `Level
 - `Maze` : conteneur des murs extérieurs et intérieurs ; l'algorithme de backtracking produit un tracé unique à chaque exécution en fonction de `mazeRows`, `mazeColumns` et `cellSize`.
 - `Collectibles` : pièces et trésors instanciés aléatoirement avec leurs valeurs configurées.
 - `Player` : instancié depuis `playerPrefab` si présent, sinon un GameObject vide est préparé. La cellule `playerStartCell` garantit un point d'apparition dégagé des murs.
-- `GameManager`, `Main Camera`, `Directional Light` : peuvent être placés manuellement ou laissés à `SceneSetup` pour une configuration automatique ; la caméra reçoit automatiquement le script `ThirdPersonCamera`.
+- `GameManager`, `Main Camera`, `Directional Light` : peuvent être placés manuellement ou laissés à `SceneSetup` pour une configuration automatique ; la caméra principale reçoit `ThirdPersonCamera` et une caméra secondaire `BirdsEyeCamera` est générée pour la vue aérienne.
 
 ### Réglages clés
 
@@ -338,14 +338,13 @@ int treasuresTotal = GameManager.Instance.GetTotalTreasures()
 
 ### ThirdPersonCamera.cs
 
-Caméra orbitale simple à paramétrer pour suivre un personnage en troisième personne.
+Caméra orbitale attachée au joueur pour une expérience third-person fluide.
 
 **Fonctionnalités clés:**
-- Suivi automatique du joueur taggé `Player` si aucune cible n'est assignée.
-- Gestion du verrouillage de curseur et lecture des axes `Mouse X/Y`.
-- Rotation orbitale complète avec limites de pitch configurables.
-- Offsets et distances éditables pour calibrer la vue.
-- Interpolations distinctes position/orientation pour un suivi fluide.
+- Suivi automatique du joueur taggé `Player` si aucune cible n'est fournie.
+- Contrôles de rotation via la souris avec limites de pitch configurables.
+- Offset et distance ajustables, lissage indépendant position/rotation.
+- Gestion du verrouillage de curseur lorsque la vue third-person est active.
 
 **Paramètres configurables:**
 ```csharp
@@ -357,6 +356,41 @@ Caméra orbitale simple à paramétrer pour suivre un personnage en troisième p
 [SerializeField] private float maxPitch = 70f;
 [SerializeField] private float positionSmoothing = 10f;
 [SerializeField] private float rotationSmoothing = 12f;
+```
+
+### BirdsEyeCamera.cs
+
+Vue orthographique centrée sur le labyrinthe pour une analyse tactique.
+
+**Fonctionnalités clés:**
+- Centre automatiquement sa position sur le cœur du labyrinthe généré.
+- Hauteur, lissage de suivi et taille orthographique adaptables.
+- Méthodes utilitaires pour mettre à jour les bornes et se repositionner instantanément.
+
+**Paramètres configurables:**
+```csharp
+[SerializeField] private float height = 35f;
+[SerializeField] private float followSmoothing = 6f;
+[SerializeField] private float orthoLerpSpeed = 6f;
+[SerializeField] private float minOrthographicSize = 15f;
+```
+
+### CameraSwitcher.cs
+
+Orchestre le basculement entre la caméra third-person et la vue aérienne.
+
+**Fonctionnalités clés:**
+- Activation/désactivation des caméras et audio listeners associés.
+- Gestion optionnelle du curseur lors du passage en vue aérienne.
+- Initialisation automatique via `SceneSetup` et prise en charge du raccourci `Tab`.
+
+**Paramètres configurables:**
+```csharp
+[SerializeField] private Camera thirdPersonCamera;
+[SerializeField] private Camera birdsEyeCamera;
+[SerializeField] private KeyCode toggleKey = KeyCode.Tab;
+[SerializeField] private bool startWithThirdPerson = true;
+[SerializeField] private bool unlockCursorInBirdView = true;
 ```
 
 ## ⚙️ Configuration
@@ -400,15 +434,22 @@ Dans Unity, sélectionnez le GameObject du joueur et ajustez les paramètres dan
 
 ### Configuration de la Caméra
 
-Sélectionnez la caméra principale et ajustez le composant `ThirdPersonCamera` :
+Sélectionnez la caméra principale (`Main Camera`) et ajustez `ThirdPersonCamera` :
 
-- `Target`: Transform du joueur (laisse vide pour détection automatique).
-- `Target Offset`: Hauteur de regard par rapport au pivot du personnage.
-- `Distance`: Rayonnement de l'orbiting autour du joueur.
-- `Rotation Speed` / `Vertical Sensitivity`: Vitesse horizontale et verticale de rotation.
-- `Min/Max Pitch`: Bornes verticale pour éviter de passer sous le sol ou au-dessus de la verticale.
-- `Position/Rotation Smoothing`: Facteurs d'interpolation pour lisser déplacements et rotations.
-- `Lock Cursor`: Active le verrouillage du curseur pour un contrôle type TPS.
+- `Target` : Transform du joueur (laisser vide pour auto-détection).
+- `Target Offset` : Hauteur et décalage latéral du point de pivot.
+- `Distance` : Rayon d'orbite autour du personnage.
+- `Rotation Speed` / `Vertical Sensitivity` : vitesse de rotation horizontale et verticale.
+- `Min/Max Pitch` : bornes verticales pour éviter les angles extrêmes.
+- `Position/Rotation Smoothing` : lissage du suivi.
+- `Lock Cursor` : verrouillage du curseur quand la vue third-person est active.
+
+Pour la vue aérienne (`BirdsEyeCamera`) :
+
+- `Height` : altitude de la caméra orthographique.
+- `Follow Smoothing` : vitesse de recentrage vers le centre du labyrinthe.
+- `Ortho Lerp Speed` : rapidité d'ajustement de la taille orthographique.
+- `Min Orthographic Size` : taille minimale pour la scène.
 
 ## 🛠️ Technologies Utilisées
 
