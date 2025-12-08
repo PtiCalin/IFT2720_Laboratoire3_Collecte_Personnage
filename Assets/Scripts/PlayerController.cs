@@ -38,6 +38,9 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        if (cam == null)
+            cam = Camera.main?.transform;
+
         // Movement is handled in OnMove callback
         // Jump input
         if (inputActions.Player.Attack.triggered && isGrounded)
@@ -50,15 +53,25 @@ public class PlayerController : MonoBehaviour
         
         // Calculate camera-relative movement direction
         Vector3 moveDir = Vector3.zero;
-        if (input.sqrMagnitude > 0.01f && cam != null)
+        if (input.sqrMagnitude > 0.01f)
         {
-            Vector3 forward = Vector3.ProjectOnPlane(cam.forward, Vector3.up).normalized;
-            Vector3 right = Vector3.ProjectOnPlane(cam.right, Vector3.up).normalized;
-            moveDir = (right * input.x + forward * input.y).normalized * moveSpeed;
+            if (cam != null)
+            {
+                Vector3 forward = Vector3.ProjectOnPlane(cam.forward, Vector3.up).normalized;
+                Vector3 right = Vector3.ProjectOnPlane(cam.right, Vector3.up).normalized;
+                moveDir = (right * input.x + forward * input.y).normalized * moveSpeed;
+            }
+            else
+            {
+                moveDir = new Vector3(input.x, 0f, input.y).normalized * moveSpeed;
+            }
         }
 
         // Apply horizontal velocity while preserving vertical
-        rb.linearVelocity = new Vector3(moveDir.x, rb.linearVelocity.y, moveDir.z);
+        Vector3 velocity = rb.linearVelocity;
+        velocity.x = moveDir.x;
+        velocity.z = moveDir.z;
+        rb.linearVelocity = velocity;
 
         // Rotate character to face movement direction
         if (moveDir.sqrMagnitude > 0.01f)
@@ -74,19 +87,30 @@ public class PlayerController : MonoBehaviour
 
     void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.CompareTag("Ground"))
+        if (IsGroundContact(collision))
             isGrounded = true;
     }
 
     void OnCollisionStay(Collision collision)
     {
-        if (collision.gameObject.CompareTag("Ground"))
+        if (IsGroundContact(collision))
             isGrounded = true;
     }
 
     void OnCollisionExit(Collision collision)
     {
-        if (collision.gameObject.CompareTag("Ground"))
+        if (IsGroundContact(collision))
             isGrounded = false;
+    }
+
+    private bool IsGroundContact(Collision collision)
+    {
+        // Treat collisions with an upward normal as ground, independent of tag
+        foreach (var contact in collision.contacts)
+        {
+            if (contact.normal.y > 0.5f)
+                return true;
+        }
+        return false;
     }
 }

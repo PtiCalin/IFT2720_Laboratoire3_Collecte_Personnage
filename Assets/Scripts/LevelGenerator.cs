@@ -229,11 +229,7 @@ public class LevelGenerator : MonoBehaviour
 
         player.tag = "Player";
         Vector3 spawnPos = GetCellCenter(entranceCell.x, entranceCell.y);
-        spawnPos.y = playerStartPosition.y;
-        player.transform.position = spawnPos;
         player.transform.SetParent(levelParent.transform);
-
-        ReserveCell(entranceCell.x, entranceCell.y);
 
         // Setup physics
         Rigidbody rb = player.GetComponent<Rigidbody>() ?? player.AddComponent<Rigidbody>();
@@ -249,6 +245,27 @@ public class LevelGenerator : MonoBehaviour
             player.AddComponent<CapsuleCollider>();
         else if (col.isTrigger)
             col.isTrigger = false;
+
+        // Position player on ground using collider height or fallback value
+        float heightOffset = 1f;
+        Collider groundedCollider = player.GetComponentInChildren<Collider>();
+        if (groundedCollider != null)
+        {
+            Bounds b = groundedCollider.bounds;
+            heightOffset = b.extents.y + 0.05f;
+        }
+
+        // Keep entrance cell but inset from the west opening so we start inside the corridor, not on the border/wall
+        float cellHalfSize = spacing * 0.5f;
+        float inset = Mathf.Max(0.5f, wallThickness + 0.2f); // stay clear of walls
+        float offsetDist = Mathf.Max(cellHalfSize - inset, 0.05f);
+        Vector3 entranceInset = Vector3.left * offsetDist; // west opening => move slightly left from center toward entrance
+
+        spawnPos += entranceInset;
+        spawnPos.y = Mathf.Max(playerStartPosition.y, heightOffset);
+        player.transform.position = spawnPos;
+
+        ReserveCell(entranceCell.x, entranceCell.y);
 
         // Setup controller
         PlayerController controller = player.GetComponent<PlayerController>() ?? player.AddComponent<PlayerController>();

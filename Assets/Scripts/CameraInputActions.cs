@@ -1,6 +1,8 @@
 // Auto-generated input actions for camera controls
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Utilities;
+using System.Collections;
+using System.Collections.Generic;
 
 public class CameraInputActions : IInputActionCollection
 {
@@ -32,5 +34,12 @@ public class CameraInputActions : IInputActionCollection
     public InputAction Look { get; }
     public void Enable() => asset.Enable();
     public void Disable() => asset.Disable();
-    public void Dispose() => asset.Dispose();
+
+    // IInputActionCollection implementation
+    public InputBinding? bindingMask { get => asset.bindingMask; set => asset.bindingMask = value; }
+    public ReadOnlyArray<InputDevice>? devices { get => asset.devices; set => asset.devices = value; }
+    public ReadOnlyArray<InputControlScheme> controlSchemes => asset.controlSchemes;
+    public bool Contains(InputAction action) => asset.Contains(action);
+    public IEnumerator<InputAction> GetEnumerator() => asset.GetEnumerator();
+    IEnumerator IEnumerable.GetEnumerator() => asset.GetEnumerator();
 }

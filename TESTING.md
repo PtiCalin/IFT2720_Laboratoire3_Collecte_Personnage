@@ -37,17 +37,21 @@ This document provides a complete step-by-step guide to set up and test the Coll
 
 Create a new scene or use an existing one. The LevelGenerator script will automatically create most elements, but you need to set up the core components.
 
+#### Add Scene Generator
+
+- [x] Create empty GameObject: **GameObject > Create Empty** (name it "SceneGenerator")
+
 #### Add Level Generator (Core Game Logic)
 
-- Create empty GameObject: **GameObject > Create Empty** (name it "LevelGenerator")
-- Add **LevelGenerator** script component (**Component > Scripts > LevelGenerator**)
-- In Inspector, configure:
-  - **Ground Material**: Drag a material asset (or leave empty for default white)
-  - **Wall Material**: Drag a material asset for maze walls
-  - **Coin Material/Treasure Material**: Drag materials for collectibles
-  - **Player Prefab**: Drag your player prefab (or leave empty to auto-create a capsule)
-  - **Coin Prefab/Treasure Prefab**: Drag prefabs (or leave empty for primitives)
-  - Adjust other settings: maze rows/columns, cell size, player speed/jump force, collectible counts
+- [x] Create empty GameObject: **GameObject > Create Empty** (name it "LevelGenerator")
+- [x] Add **LevelGenerator** script component (**Component > Scripts > LevelGenerator**)
+In Inspector, configure:
+- [x] **Ground Material**: Drag a material asset (or leave empty for default white)
+- [x] **Wall Material**: Drag a material asset for maze walls
+- [x] **Coin Material/Treasure Material**: Drag materials for collectibles
+- [x] **Player Prefab**: Drag your player prefab (or leave empty to auto-create a capsule)
+- [x] **Coin Prefab/Treasure Prefab**: Drag prefabs (or leave empty for primitives)
+- [x] Adjust other settings: maze rows/columns, cell size, player speed/jump force, collectible counts
 
 #### Add Camera Rig (Camera System)
 
