@@ -1,5 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 /// <summary>
 /// Génère automatiquement le niveau de jeu incluant :
@@ -25,6 +28,9 @@ public class LevelGenerator : MonoBehaviour
     [SerializeField] private int numberOfTreasures = 3;
     [SerializeField] private int coinPointsValue = 10;
     [SerializeField] private int treasurePointsValue = 50;
+    [SerializeField] private GameObject coinPrefab;
+    [SerializeField] private GameObject treasurePrefab;
+    [SerializeField] private GameObject defaultPlayerPrefab;
     
     [Header("Configuration du Labyrinthe")]
     [SerializeField, Min(2)] private int mazeRows = 12;
@@ -333,10 +339,12 @@ public class LevelGenerator : MonoBehaviour
     /// </summary>
     private void CreatePlayer()
     {
-        if (playerPrefab != null)
+        GameObject prefabToUse = playerPrefab != null ? playerPrefab : defaultPlayerPrefab;
+
+        if (prefabToUse != null)
         {
-            player = Instantiate(playerPrefab, playerStartPosition, Quaternion.identity, levelParent.transform);
-            player.name = "Player";
+            player = Instantiate(prefabToUse, playerStartPosition, Quaternion.identity, levelParent.transform);
+            player.name = prefabToUse.name;
         }
         else
         {
@@ -398,7 +406,7 @@ public class LevelGenerator : MonoBehaviour
             }
         }
 
-        Debug.Log("Joueur créé à la position: " + spawnPosition + (playerPrefab != null ? " avec le modèle fourni." : " via un objet placeholder."));
+        Debug.Log("Joueur créé à la position: " + spawnPosition + (prefabToUse != null ? " avec le modèle fourni." : " via un objet placeholder."));
     }
 
     /// <summary>
@@ -447,18 +455,83 @@ public class LevelGenerator : MonoBehaviour
     /// </summary>
     private void CreateCoin(Vector3 position, GameObject parent)
     {
-        GameObject coin = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        coin.name = "Coin";
+        GameObject coin;
+        bool usedFallback = coinPrefab == null;
+
+        if (!usedFallback)
+        {
+            coin = Instantiate(coinPrefab, position, Quaternion.identity, parent.transform);
+            coin.name = coinPrefab.name;
+        }
+        else
+        {
+            coin = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            coin.name = "Coin";
+            coin.transform.SetParent(parent.transform, true);
+            coin.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
+        }
+
+        if (coin.transform.parent != parent.transform)
+        {
+            coin.transform.SetParent(parent.transform, true);
+        }
         coin.transform.position = position;
-        coin.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
-        coin.transform.parent = parent.transform;
-        
-        // Configurer le collider comme trigger
-        Collider collider = coin.GetComponent<Collider>();
-        collider.isTrigger = true;
-        
-        // Ajouter le script Collectible
-        Collectible collectible = coin.AddComponent<Collectible>();
+
+        // Configurer les colliders comme triggers
+        Collider[] colliders = coin.GetComponentsInChildren<Collider>();
+        if (colliders.Length == 0)
+        {
+            Collider generated = coin.AddComponent<SphereCollider>();
+            generated.isTrigger = true;
+        }
+        else
+        {
+            foreach (Collider col in colliders)
+            {
+                col.isTrigger = true;
+            }
+
+            #if UNITY_EDITOR
+                private void OnValidate()
+                {
+                    bool changed = false;
+
+                    changed |= AutoAssignDefaultAsset(ref coinPrefab, "Assets/Models/Collectibles/coins/coin-4.fbx");
+                    changed |= AutoAssignDefaultAsset(ref treasurePrefab, "Assets/Models/Collectibles/chests/chest-1.fbx");
+                    changed |= AutoAssignDefaultAsset(ref defaultPlayerPrefab, "Assets/Models/Characters/character_root.fbx");
+
+                    if (changed)
+                    {
+                        EditorUtility.SetDirty(this);
+                    }
+                }
+
+                private bool AutoAssignDefaultAsset(ref GameObject targetField, string assetPath)
+                {
+                    if (targetField != null)
+                    {
+                        return false;
+                    }
+
+                    GameObject asset = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+                    if (asset == null)
+                    {
+                        return false;
+                    }
+
+                    targetField = asset;
+                    return true;
+                }
+            #endif
+        }
+
+        // Ajouter le script Collectible le cas échéant
+        Collectible collectible = coin.GetComponent<Collectible>();
+        if (collectible == null)
+        {
+            collectible = coin.AddComponent<Collectible>();
+        }
+
         // Utiliser la réflexion pour définir les champs privés sérialisés
         var type = typeof(Collectible);
         type.GetField("isTreasure", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
@@ -471,16 +544,22 @@ public class LevelGenerator : MonoBehaviour
             ?.SetValue(collectible, 2f);
         type.GetField("bobHeight", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
             ?.SetValue(collectible, 0.3f);
-        
-        // Appliquer le matériau si disponible (jaune pour les pièces)
-        Renderer renderer = coin.GetComponent<Renderer>();
+
+        // Appliquer le matériau si disponible
         if (coinMaterial != null)
         {
-            renderer.material = coinMaterial;
+            foreach (Renderer renderer in coin.GetComponentsInChildren<Renderer>())
+            {
+                renderer.material = coinMaterial;
+            }
         }
-        else
+        else if (usedFallback)
         {
-            renderer.material.color = Color.yellow;
+            Renderer renderer = coin.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                renderer.material.color = Color.yellow;
+            }
         }
     }
 
@@ -489,18 +568,50 @@ public class LevelGenerator : MonoBehaviour
     /// </summary>
     private void CreateTreasure(Vector3 position, GameObject parent)
     {
-        GameObject treasure = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        treasure.name = "Treasure";
+        GameObject treasure;
+        bool usedFallback = treasurePrefab == null;
+
+        if (!usedFallback)
+        {
+            treasure = Instantiate(treasurePrefab, position, Quaternion.identity, parent.transform);
+            treasure.name = treasurePrefab.name;
+        }
+        else
+        {
+            treasure = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            treasure.name = "Treasure";
+            treasure.transform.SetParent(parent.transform, true);
+            treasure.transform.localScale = new Vector3(0.7f, 0.7f, 0.7f);
+        }
+
+        if (treasure.transform.parent != parent.transform)
+        {
+            treasure.transform.SetParent(parent.transform, true);
+        }
         treasure.transform.position = position;
-        treasure.transform.localScale = new Vector3(0.7f, 0.7f, 0.7f);
-        treasure.transform.parent = parent.transform;
-        
-        // Configurer le collider comme trigger
-        Collider collider = treasure.GetComponent<Collider>();
-        collider.isTrigger = true;
-        
-        // Ajouter le script Collectible
-        Collectible collectible = treasure.AddComponent<Collectible>();
+
+        // Configurer les colliders comme triggers
+        Collider[] colliders = treasure.GetComponentsInChildren<Collider>();
+        if (colliders.Length == 0)
+        {
+            Collider generated = treasure.AddComponent<BoxCollider>();
+            generated.isTrigger = true;
+        }
+        else
+        {
+            foreach (Collider col in colliders)
+            {
+                col.isTrigger = true;
+            }
+        }
+
+        // Ajouter le script Collectible le cas échéant
+        Collectible collectible = treasure.GetComponent<Collectible>();
+        if (collectible == null)
+        {
+            collectible = treasure.AddComponent<Collectible>();
+        }
+
         // Utiliser la réflexion pour définir les champs privés sérialisés
         var type = typeof(Collectible);
         type.GetField("isTreasure", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
@@ -513,16 +624,22 @@ public class LevelGenerator : MonoBehaviour
             ?.SetValue(collectible, 1.5f);
         type.GetField("bobHeight", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
             ?.SetValue(collectible, 0.4f);
-        
-        // Appliquer le matériau si disponible (doré/orange pour les trésors)
-        Renderer renderer = treasure.GetComponent<Renderer>();
+
+        // Appliquer le matériau si disponible
         if (treasureMaterial != null)
         {
-            renderer.material = treasureMaterial;
+            foreach (Renderer renderer in treasure.GetComponentsInChildren<Renderer>())
+            {
+                renderer.material = treasureMaterial;
+            }
         }
-        else
+        else if (usedFallback)
         {
-            renderer.material.color = new Color(1f, 0.5f, 0f); // Orange/doré
+            Renderer renderer = treasure.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                renderer.material.color = new Color(1f, 0.5f, 0f);
+            }
         }
     }
 
