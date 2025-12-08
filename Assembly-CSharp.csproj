@@ -58,6 +58,9 @@
     <Compile Include="Assets\Scripts\UI.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Assets\Shaders\CharacterRimLit.shader" />
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="UnityEngine">
       <HintPath>C:\Program Files\Unity\Hub\Editor\6000.2.7f2\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>
       <Private>False</Private>
