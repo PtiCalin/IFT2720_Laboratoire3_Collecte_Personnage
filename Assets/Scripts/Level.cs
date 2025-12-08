@@ -8,8 +8,8 @@ public class Level : MonoBehaviour
     [SerializeField] private Material groundMaterial;
     
     [Header("Joueur")]
-    [SerializeField] private Vector3 playerStartPosition = new Vector3(0, 2, 0);
-    [SerializeField] private float playerMoveSpeed = 5f;
+    [SerializeField] private Vector3 playerStartPosition = new Vector3(0, 1f, 0);
+    [SerializeField] private float playerMoveSpeed = 7f;
     [SerializeField] private float playerJumpForce = 5f;
     [SerializeField] private GameObject playerPrefab;
     
@@ -234,19 +234,23 @@ public class Level : MonoBehaviour
 
         Collider col = player.GetComponentInChildren<Collider>();
         if (col == null)
-            player.AddComponent<CapsuleCollider>();
+        {
+            col = player.AddComponent<CapsuleCollider>();
+        }
         else if (col.isTrigger)
+        {
             col.isTrigger = false;
+        }
 
         float heightOffset = 1f;
         Collider groundedCollider = player.GetComponentInChildren<Collider>();
         if (groundedCollider != null)
         {
             Bounds b = groundedCollider.bounds;
-            heightOffset = b.extents.y + 0.05f;
+            heightOffset = b.extents.y + 0.02f; // tuck closer to the ground
         }
 
-        spawnPos.y = Mathf.Max(playerStartPosition.y, heightOffset);
+        spawnPos.y = Mathf.Max(heightOffset, 0.5f);
         player.transform.position = spawnPos;
 
         ReserveCell(entranceCell.x, entranceCell.y);
@@ -287,7 +291,9 @@ public class Level : MonoBehaviour
             coin.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
             coin.transform.SetParent(parent.transform);
 
-            Collider col = coin.GetComponent<Collider>() ?? coin.AddComponent<SphereCollider>();
+            Collider col = coin.GetComponentInChildren<Collider>();
+            if (col == null)
+                col = coin.AddComponent<SphereCollider>();
             col.isTrigger = true;
 
             if (coinMaterial != null)
@@ -316,7 +322,9 @@ public class Level : MonoBehaviour
             treasure.transform.localScale = new Vector3(0.7f, 0.7f, 0.7f);
             treasure.transform.SetParent(parent.transform);
 
-            Collider col = treasure.GetComponent<Collider>() ?? treasure.AddComponent<BoxCollider>();
+            Collider col = treasure.GetComponentInChildren<Collider>();
+            if (col == null)
+                col = treasure.AddComponent<BoxCollider>();
             col.isTrigger = true;
 
             if (treasureMaterial != null)

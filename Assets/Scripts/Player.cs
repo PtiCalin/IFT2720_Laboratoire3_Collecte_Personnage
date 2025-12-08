@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UCamera = UnityEngine.Camera;
 
 /// <summary>
 /// Rigidbody-based character controller with acceleration, speed cap, air control and jump stack.
@@ -68,13 +69,13 @@ public class Player : MonoBehaviour
         rb.interpolation = RigidbodyInterpolation.Interpolate;
 
         if (cameraTransform == null)
-            cameraTransform = Camera.main != null ? Camera.main.transform : null;
+            cameraTransform = UCamera.main != null ? UCamera.main.transform : null;
     }
 
     private void Update()
     {
         if (cameraTransform == null)
-            cameraTransform = Camera.main != null ? Camera.main.transform : null;
+            cameraTransform = UCamera.main != null ? UCamera.main.transform : null;
 
         moveInput = inputActions.Player.Move.ReadValue<Vector2>();
         if (inputActions.Player.Jump.WasPressedThisFrame())
