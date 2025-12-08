@@ -95,13 +95,13 @@ public class MainMenuUI : MonoBehaviour
         return img;
     }
 
-    private void BuildButton(Transform parent, string label, Vector2 size, Vector2 pos, Color color, UnityEngine.Events.UnityAction onClick, string name)
+    private void BuildButton(Transform parent, string label, Vector2 size, Vector2 pos, Color textColor, Color fillColor, UnityEngine.Events.UnityAction onClick, string name)
     {
         var btnGO = new GameObject(name, typeof(Button), typeof(Image));
         btnGO.transform.SetParent(parent, false);
 
         var img = btnGO.GetComponent<Image>();
-        img.color = buttonFillColor;
+        img.color = fillColor;
 
         var rect = btnGO.GetComponent<RectTransform>();
         rect.sizeDelta = size;
@@ -118,7 +118,7 @@ public class MainMenuUI : MonoBehaviour
         txt.text = label;
         txt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         txt.fontSize = 28;
-        txt.color = buttonTextColor;
+        txt.color = textColor;
         txt.alignment = TextAnchor.MiddleCenter;
 
         var txtRect = txtGO.GetComponent<RectTransform>();
