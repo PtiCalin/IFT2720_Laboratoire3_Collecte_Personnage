@@ -41,7 +41,9 @@ public class CameraRigController : MonoBehaviour
     private Vector3 birdsEyeCenter;
     private bool hasBirdsEyeCenter;
     private float birdsEyeTargetOrthographicSize;
-    private CameraInputActions camInput;
+    // Input actions consolidated here so the rig is self-contained
+    private InputAction toggleAction;
+    private InputAction lookAction;
 
     private void Awake()
     {
@@ -56,8 +58,10 @@ public class CameraRigController : MonoBehaviour
         {
             birdsEyeTargetOrthographicSize = birdsEyeMinOrthographicSize;
         }
-        camInput = new CameraInputActions();
-        camInput.Camera.Toggle.performed += ctx => ToggleCameraMode();
+        // Build input actions inline (Tab to toggle, Mouse delta to look)
+        toggleAction = new InputAction(type: InputActionType.Button, binding: "<Keyboard>/tab");
+        lookAction = new InputAction(type: InputActionType.Value, binding: "<Mouse>/delta");
+        toggleAction.performed += ctx => ToggleCameraMode();
     }
 
     private void Start()
@@ -69,7 +73,8 @@ public class CameraRigController : MonoBehaviour
         pitch = ClampPitch(euler.x);
 
         SetMode(startMode, true);
-        camInput.Enable();
+        toggleAction.Enable();
+        lookAction.Enable();
     }
 
     private void Update()
@@ -196,7 +201,7 @@ public class CameraRigController : MonoBehaviour
             return;
         }
 
-        Vector2 mouseDelta = camInput.Camera.Look.ReadValue<Vector2>();
+        Vector2 mouseDelta = lookAction.ReadValue<Vector2>();
         yaw += mouseDelta.x * rotationSpeed * Time.deltaTime;
         pitch -= mouseDelta.y * rotationSpeed * verticalSensitivity * Time.deltaTime;
         pitch = ClampPitch(pitch);
@@ -254,7 +259,8 @@ public class CameraRigController : MonoBehaviour
     {
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
-        camInput.Disable();
+        toggleAction.Disable();
+        lookAction.Disable();
     }
 
     private void ToggleCameraMode()
