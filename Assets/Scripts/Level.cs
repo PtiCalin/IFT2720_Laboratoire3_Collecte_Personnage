@@ -217,15 +217,27 @@ public class Level : MonoBehaviour
 
     private void CreatePlayer()
     {
+        // Ensure single instance
+        var existing = GameObject.FindWithTag("Player");
+        if (existing != null)
+        {
+            Destroy(existing);
+        }
+
         GameObject player = playerPrefab != null 
             ? Instantiate(playerPrefab, Vector3.zero, Quaternion.identity, levelParent.transform)
             : new GameObject("Player");
 
+        player.name = "Player";
         player.tag = "Player";
         Vector3 spawnPos = GetCellCenter(entranceCell.x, entranceCell.y);
         player.transform.SetParent(levelParent.transform);
 
-        Rigidbody rb = player.GetComponent<Rigidbody>() ?? player.AddComponent<Rigidbody>();
+        Rigidbody rb = player.GetComponent<Rigidbody>();
+        if (rb == null)
+        {
+            rb = player.AddComponent<Rigidbody>();
+        }
         rb.mass = 1f;
         rb.linearDamping = 0f;
         rb.angularDamping = 0.05f;
@@ -242,15 +254,15 @@ public class Level : MonoBehaviour
             col.isTrigger = false;
         }
 
-        float heightOffset = 1f;
+        float heightOffset = 0.5f;
         Collider groundedCollider = player.GetComponentInChildren<Collider>();
         if (groundedCollider != null)
         {
             Bounds b = groundedCollider.bounds;
-            heightOffset = b.extents.y + 0.02f; // tuck closer to the ground
+            heightOffset = b.extents.y + 0.001f; // align bottom to ground
         }
 
-        spawnPos.y = Mathf.Max(heightOffset, 0.5f);
+        spawnPos.y = Mathf.Max(heightOffset, playerStartPosition.y);
         player.transform.position = spawnPos;
 
         ReserveCell(entranceCell.x, entranceCell.y);
