@@ -106,7 +106,7 @@ public class Player : MonoBehaviour
 
     private void ApplyDrag()
     {
-        rb.drag = isGrounded ? groundedDrag : airDrag;
+        rb.linearDamping = isGrounded ? groundedDrag : airDrag;
     }
 
     private Vector3 CalculateMoveDirection(Vector2 input)
@@ -126,14 +126,14 @@ public class Player : MonoBehaviour
 
     private void ApplyMovement(Vector3 desiredDirection)
     {
-        Vector3 velocity = rb.velocity;
+        Vector3 velocity = rb.linearVelocity;
         Vector3 horizontal = new Vector3(velocity.x, 0f, velocity.z);
         Vector3 targetHorizontal = desiredDirection * maxSpeed;
 
         float accel = acceleration * (isGrounded ? 1f : airControlMultiplier);
         horizontal = Vector3.MoveTowards(horizontal, targetHorizontal, accel * Time.fixedDeltaTime);
 
-        rb.velocity = new Vector3(horizontal.x, velocity.y, horizontal.z);
+        rb.linearVelocity = new Vector3(horizontal.x, velocity.y, horizontal.z);
     }
 
     private void HandleJump()
@@ -148,10 +148,10 @@ public class Player : MonoBehaviour
             return;
         }
 
-        Vector3 velocity = rb.velocity;
+        Vector3 velocity = rb.linearVelocity;
         if (resetVerticalVelocityOnJump)
             velocity.y = 0f;
-        rb.velocity = velocity;
+        rb.linearVelocity = velocity;
 
         rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
         jumpsUsed++;
