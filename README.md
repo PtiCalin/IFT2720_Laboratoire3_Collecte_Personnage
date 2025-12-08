@@ -1,49 +1,46 @@
-# 🎮 Laboratoire 3 - Collecte de Personnage avec Physique Unity
+# Laboratoire 3 - Collecte de Personnage
 
-[![Unity Version](https://img.shields.io/badge/Unity-2022.3%2B-blue.svg)](https://unity.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Mac%20%7C%20Linux-lightgrey.svg)](https://unity.com/)
-[![Course](https://img.shields.io/badge/Course-IFT2720-purple.svg)](https://admission.umontreal.ca/cours-et-horaires/cours/ift-2720/)
+Projet Unity 3D pour le cours IFT2720. Le générateur de niveau construit un labyrinthe procédural, instancie le joueur à l'entrée, répartit les collectibles et configure la caméra dynamique.
 
-Un projet de jeu 3D développé avec Unity, explorant les mécaniques de physique avancées avec **Rigidbody**, le contrôle de personnage basé sur les forces physiques, et l'implémentation d'un système de collecte d'objets interactifs.
+## Aperçu rapide
 
-## 📋 Table des Matières
+- Génération de labyrinthe 100 % procédurale avec entrée et sortie uniques.
+- Joueur contrôlé par un `Rigidbody` simple (déplacements caméra-relatifs et saut).
+- Pièces et trésors animés qui attribuent des points au `GameManager`.
+- Caméra unique basculant entre orbite third-person et vue aérienne.
+- Matériaux recherchés automatiquement dans `Assets/Materials` (support Poliigon).
 
-- [Aperçu](#aperçu)
-- [Objectifs du Laboratoire](#objectifs-du-laboratoire)
-- [Fonctionnalités Implémentées](#fonctionnalités-implémentées)
-- [Installation](#installation)
-- [Comment Jouer](#comment-jouer)
-- [Architecture du Projet](#architecture-du-projet)
-- [Structure de la Scène](#structure-de-la-scène)
-- [Bibliothèque de Prefabs](#bibliothèque-de-prefabs)
-- [Scripts Principaux](#scripts-principaux)
-- [Configuration](#configuration)
-- [Technologies Utilisées](#technologies-utilisées)
-- [Développement](#développement)
-- [Crédits des Assets & Algorithmes](#crédits-des-assets--algorithmes)
-- [Contributeurs](#contributeurs)
-- [Licence](#licence)
+## Prise en main
 
-## 🎯 Aperçu
+1. Ouvrir le projet dans Unity 2022.3 LTS ou plus récent.
+2. Importer vos textures dans `Assets/Materials` et, au besoin, les assigner dans `LevelGenerator`.
+3. Charger la scène principale et appuyer sur Play.
 
-Ce projet constitue le **Laboratoire 3** du cours **IFT2720 - Introduction au Multimédia** à l'Université de Montréal. Il s'agit d'une exploration approfondie des systèmes de physique Unity et de l'implémentation d'un contrôleur de personnage 3D utilisant exclusivement le composant **Rigidbody** pour le mouvement et les interactions.
+### Contrôles
 
-Le laboratoire met l'accent sur la compréhension et l'application pratique des concepts suivants :
-- **Physique Unity** : Utilisation du moteur physique pour créer des mouvements réalistes
-- **Rigidbody Controller** : Contrôle de personnage basé sur les forces et vélocités
-- **Système de Collecte** : Détection de collisions et interactions avec des objets
-- **Game Management** : Architecture singleton et gestion d'état global
-- **UI Dynamique** : Mise à jour en temps réel de l'interface utilisateur
+- `WASD` ou flèches : déplacement
+- `Espace` : saut
+- Souris : rotation caméra
+- `Tab` : basculer vue third-person / vue aérienne
 
-### Contexte Académique
+## Scripts principaux
 
-**Cours :** IFT2720 - Introduction au Multimédia  
-**Laboratoire :** #3 - Collecte de Personnage  
-**Objectif Principal :** Maîtriser les composants physiques Unity (Rigidbody, Collider, Forces) et créer un système de gameplay interactif complet.
+- `LevelGenerator` : crée sol, labyrinthe, joueur, collectibles et applique les matériaux.
+- `PlayerController` : gère mouvement caméra-relatif, saut et orientation du modèle.
+- `CameraRigController` : orchestre les deux modes de caméra et gère le verrou du curseur.
+- `Collectible` : anime les pièces/trésors et notifie le `GameManager`.
+- `GameManager` : garde le score global et met à jour l'UI `TextMeshPro`.
+- `SceneSetup` : ajoute lumière, caméra et game manager lorsqu'ils sont absents.
 
-## 🎓 Objectifs du Laboratoire
+## Gestion des assets
 
+- Les prefabs recommandés se trouvent dans `Assets/Models/` et `Assets/Prefabs/`.
+- Les matériaux sont créés ou déplacés automatiquement vers `Assets/Materials`.
+- Si aucune texture n'est trouvée, une couleur de repli est appliquée.
+
+## Licence
+
+MIT. Voir `LICENSE` pour les détails.
 ### Objectifs Pédagogiques Principaux
 
 1. **Maîtrise du Rigidbody**
