@@ -376,10 +376,11 @@ public class LevelGenerator : MonoBehaviour
         playerController.moveSpeed = playerMoveSpeed;
         playerController.jumpForce = playerJumpForce;
 
-        ThirdPersonCamera followCamera = FindFirstObjectByType<ThirdPersonCamera>();
+        ThirdPersonCamera followCamera = FindFirstObjectByType<ThirdPersonCamera>(FindObjectsInactive.Include);
         if (followCamera != null)
         {
             followCamera.SetTarget(player.transform);
+            followCamera.SnapToTarget();
         }
 
         Debug.Log("Joueur créé à la position: " + spawnPosition + (playerPrefab != null ? " avec le modèle fourni." : " via un objet placeholder."));
@@ -451,13 +452,6 @@ public class LevelGenerator : MonoBehaviour
             renderer.material.color = Color.yellow;
         }
     }
-
-            ThirdPersonCamera thirdPerson = FindFirstObjectByType<ThirdPersonCamera>(FindObjectsInactive.Include);
-            if (thirdPerson != null)
-            {
-                thirdPerson.SetTarget(player.transform);
-                thirdPerson.SnapToTarget();
-            }
 
     /// <summary>
     /// Crée un trésor collectible
