@@ -8,17 +8,17 @@ public class CameraInputActions : IInputActionCollection
     public CameraInputActions()
     {
         asset = InputActionAsset.FromJson(@"{
-            \"name\": \"Camera\",
-            \"maps\": [
+            ""name"": ""Camera"",
+            ""maps"": [
                 {
-                    \"name\": \"Camera\",
-                    \"actions\": [
-                        { \"name\": \"Toggle\", \"type\": \"Button\", \"expectedControlType\": \"Button\" },
-                        { \"name\": \"Look\", \"type\": \"Value\", \"expectedControlType\": \"Vector2\" }
+                    ""name"": ""Camera"",
+                    ""actions"": [
+                        { ""name"": ""Toggle"", ""type"": ""Button"", ""expectedControlType"": ""Button"" },
+                        { ""name"": ""Look"", ""type"": ""Value"", ""expectedControlType"": ""Vector2"" }
                     ],
-                    \"bindings\": [
-                        { \"name\": \"\", \"id\": \"toggle\", \"path\": \"<Keyboard>/tab\", \"action\": \"Toggle\" },
-                        { \"name\": \"\", \"id\": \"look\", \"path\": \"<Mouse>/delta\", \"action\": \"Look\" }
+                    ""bindings"": [
+                        { ""name"": """", ""id"": ""toggle"", ""path"": ""<Keyboard>/tab"", ""action"": ""Toggle"" },
+                        { ""name"": """", ""id"": ""look"", ""path"": ""<Mouse>/delta"", ""action"": ""Look"" }
                     ]
                 }
             ]
