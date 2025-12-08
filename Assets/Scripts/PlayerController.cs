@@ -1,120 +1,92 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
-    [Header("Paramètres de Déplacement")]
     public float moveSpeed = 5f;
     public float jumpForce = 5f;
-    [SerializeField] private float rotationSharpness = 12f;
-    [SerializeField] private Transform referenceCamera;
+    [SerializeField] private float rotationSpeed = 12f;
     [SerializeField] private Transform character;
+    
     private Rigidbody rb;
+    private Transform cam;
     private bool isGrounded;
-    private Vector3 desiredHorizontalVelocity;
-    private Vector3 desiredLookDirection;
+    private InputSystem_Actions inputActions;
+
+    void Awake()
+    {
+        inputActions = new InputSystem_Actions();
+        inputActions.Player.Move.performed += OnMove;
+        inputActions.Player.Move.canceled += OnMove;
+    }
+
+    void OnEnable()
+    {
+        inputActions.Player.Enable();
+    }
+
+    void OnDisable()
+    {
+        inputActions.Player.Disable();
+    }
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
-        CacheCamera();
+        cam = Camera.main?.transform;
     }
 
     void Update()
     {
-        if (referenceCamera == null)
-        {
-            CacheCamera();
-        }
-
-        float moveHorizontal = Input.GetAxisRaw("Horizontal");
-        float moveVertical = Input.GetAxisRaw("Vertical");
-
-        Vector3 input = new Vector3(moveHorizontal, 0f, moveVertical);
-        if (input.sqrMagnitude > 1f)
-        {
-            input.Normalize();
-        }
-
-        if (input.sqrMagnitude > 0f)
-        {
-            Vector3 forward = Vector3.forward;
-            Vector3 right = Vector3.right;
-            if (referenceCamera != null)
-            {
-                forward = Vector3.ProjectOnPlane(referenceCamera.forward, Vector3.up).normalized;
-                right = Vector3.ProjectOnPlane(referenceCamera.right, Vector3.up).normalized;
-            }
-
-            Vector3 moveDirection = (right * input.x + forward * input.z).normalized;
-            desiredHorizontalVelocity = moveDirection * moveSpeed;
-            desiredLookDirection = moveDirection;
-        }
-        else
-        {
-            desiredHorizontalVelocity = Vector3.zero;
-            desiredLookDirection = Vector3.zero;
-        }
-
-        if (Input.GetButtonDown("Jump") && isGrounded)
-        {
+        // Movement is handled in OnMove callback
+        // Jump input
+        if (inputActions.Player.Attack.triggered && isGrounded)
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-        }
     }
 
-    void FixedUpdate()
+    private void OnMove(InputAction.CallbackContext context)
     {
-        Vector3 currentVelocity = rb.linearVelocity;
-        Vector3 velocity = new Vector3(desiredHorizontalVelocity.x, currentVelocity.y, desiredHorizontalVelocity.z);
-        rb.linearVelocity = velocity;
-
-        if (desiredLookDirection.sqrMagnitude > 0.0001f)
+        Vector2 input = context.ReadValue<Vector2>();
+        
+        // Calculate camera-relative movement direction
+        Vector3 moveDir = Vector3.zero;
+        if (input.sqrMagnitude > 0.01f && cam != null)
         {
-            Quaternion targetRotation = Quaternion.LookRotation(desiredLookDirection, Vector3.up);
-            Quaternion smoothed = Quaternion.Slerp(rb.rotation, targetRotation, 1f - Mathf.Exp(-rotationSharpness * Time.fixedDeltaTime));
-            rb.MoveRotation(smoothed);
+            Vector3 forward = Vector3.ProjectOnPlane(cam.forward, Vector3.up).normalized;
+            Vector3 right = Vector3.ProjectOnPlane(cam.right, Vector3.up).normalized;
+            moveDir = (right * input.x + forward * input.y).normalized * moveSpeed;
+        }
 
+        // Apply horizontal velocity while preserving vertical
+        rb.linearVelocity = new Vector3(moveDir.x, rb.linearVelocity.y, moveDir.z);
+
+        // Rotate character to face movement direction
+        if (moveDir.sqrMagnitude > 0.01f)
+        {
+            Quaternion targetRot = Quaternion.LookRotation(moveDir, Vector3.up);
+            Quaternion smoothRot = Quaternion.Slerp(rb.rotation, targetRot, 1f - Mathf.Exp(-rotationSpeed * Time.deltaTime));
+            rb.MoveRotation(smoothRot);
+            
             if (character != null)
-            {
-                character.rotation = smoothed;
-            }
+                character.rotation = smoothRot;
         }
     }
 
     void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.CompareTag("Ground"))
-        {
             isGrounded = true;
-        }
     }
 
     void OnCollisionStay(Collision collision)
     {
         if (collision.gameObject.CompareTag("Ground"))
-        {
             isGrounded = true;
-        }
     }
 
     void OnCollisionExit(Collision collision)
     {
         if (collision.gameObject.CompareTag("Ground"))
-        {
             isGrounded = false;
-        }
-    }
-
-    private void CacheCamera()
-    {
-        if (referenceCamera != null)
-        {
-            return;
-        }
-
-        Camera mainCamera = Camera.main;
-        if (mainCamera != null)
-        {
-            referenceCamera = mainCamera.transform;
-        }
     }
 }
