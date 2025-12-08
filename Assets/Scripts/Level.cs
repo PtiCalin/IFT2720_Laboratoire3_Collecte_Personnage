@@ -308,10 +308,17 @@ public class Level : MonoBehaviour
                 col = coin.AddComponent<SphereCollider>();
             col.isTrigger = true;
 
+            Renderer coinRenderer = coin.GetComponentInChildren<Renderer>();
+            if (coinRenderer == null)
+            {
+                coinRenderer = coin.AddComponent<MeshRenderer>();
+                coin.AddComponent<MeshFilter>().sharedMesh = Resources.GetBuiltinResource<Mesh>("Sphere.fbx");
+            }
+
             if (coinMaterial != null)
-                coin.GetComponent<Renderer>().material = coinMaterial;
+                coinRenderer.material = coinMaterial;
             else if (coinPrefab == null)
-                coin.GetComponent<Renderer>().material.color = Color.yellow;
+                coinRenderer.material.color = Color.yellow;
 
             Collectible c = coin.GetComponent<Collectible>() ?? coin.AddComponent<Collectible>();
             c.Configure(false, coinPointsValue, 100f, 2f, 0.3f);
@@ -339,10 +346,17 @@ public class Level : MonoBehaviour
                 col = treasure.AddComponent<BoxCollider>();
             col.isTrigger = true;
 
+            Renderer treasureRenderer = treasure.GetComponentInChildren<Renderer>();
+            if (treasureRenderer == null)
+            {
+                treasureRenderer = treasure.AddComponent<MeshRenderer>();
+                treasure.AddComponent<MeshFilter>().sharedMesh = Resources.GetBuiltinResource<Mesh>("Cube.fbx");
+            }
+
             if (treasureMaterial != null)
-                treasure.GetComponent<Renderer>().material = treasureMaterial;
+                treasureRenderer.material = treasureMaterial;
             else if (treasurePrefab == null)
-                treasure.GetComponent<Renderer>().material.color = new Color(1f, 0.5f, 0f);
+                treasureRenderer.material.color = new Color(1f, 0.5f, 0f);
 
             Collectible c = treasure.GetComponent<Collectible>() ?? treasure.AddComponent<Collectible>();
             c.Configure(true, treasurePointsValue, 80f, 1.5f, 0.4f);
