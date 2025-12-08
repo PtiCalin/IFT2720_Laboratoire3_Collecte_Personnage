@@ -4,20 +4,25 @@ using UnityEngine.UI;
 using UCamera = UnityEngine.Camera;
 
 /// <summary>
-/// Programmatically builds a simple launch menu: background image, camera, and a centered button.
-/// Attach this script to an empty GameObject in your launch scene.
+/// Single entry-point script to build and run the main menu at runtime (camera + background + Entrer button + Quit optional).
+/// Attach to an empty GameObject in your menu scene. Requires a sprite named LaunchMenuBackground in Resources.
 /// </summary>
 [DisallowMultipleComponent]
-public class LaunchSceneBuilder : MonoBehaviour
+public class MainMenuUI : MonoBehaviour
 {
-    [Header("Assets")]
-    [SerializeField] private string backgroundSpriteName = "LaunchMenuBackground"; // Resources/<name>
-    [SerializeField] private string buttonLabel = "Entrer";
+    [Header("Scenes")]
     [SerializeField] private string gameplaySceneName = "JeuCollecte";
 
-    [Header("Layout")]
+    [Header("Background")]
+    [SerializeField] private string backgroundResourceName = "LaunchMenuBackground";
+    [SerializeField] private Color fallbackBackgroundColor = new Color(0.05f, 0.05f, 0.07f, 1f);
+
+    [Header("Button")]
+    [SerializeField] private string buttonLabel = "Entrer";
     [SerializeField] private Vector2 buttonSize = new Vector2(320f, 96f);
-    [SerializeField] private Vector2 buttonOffset = new Vector2(-300f, 0f); // position relative to center (banner side)
+    [SerializeField] private Vector2 buttonPosition = new Vector2(-300f, 0f); // place over the banner
+    [SerializeField] private Color buttonColor = new Color(0.18f, 0.43f, 0.78f, 0.92f);
+    [SerializeField] private bool showQuitButton = true;
 
     private UCamera menuCamera;
 
@@ -25,8 +30,12 @@ public class LaunchSceneBuilder : MonoBehaviour
     {
         EnsureCamera();
         var canvas = BuildCanvas();
-        var background = BuildBackground(canvas);
-        BuildButton(background.transform, buttonLabel, buttonSize, buttonOffset);
+        var bg = BuildBackground(canvas);
+        BuildButton(bg.transform, buttonLabel, buttonSize, buttonPosition, buttonColor, OnStartClicked, "StartButton");
+        if (showQuitButton)
+        {
+            BuildButton(bg.transform, "Quitter", new Vector2(240f, 72f), buttonPosition + new Vector2(0f, -120f), new Color(0.3f, 0.1f, 0.1f, 0.9f), OnQuitClicked, "QuitButton");
+        }
     }
 
     private void EnsureCamera()
@@ -34,7 +43,7 @@ public class LaunchSceneBuilder : MonoBehaviour
         menuCamera = UCamera.main;
         if (menuCamera == null)
         {
-            GameObject camGO = new GameObject("Main Camera");
+            var camGO = new GameObject("Main Camera");
             menuCamera = camGO.AddComponent<UCamera>();
             camGO.tag = "MainCamera";
             camGO.transform.position = new Vector3(0f, 0f, -10f);
@@ -45,7 +54,7 @@ public class LaunchSceneBuilder : MonoBehaviour
 
     private Canvas BuildCanvas()
     {
-        GameObject canvasGO = new GameObject("MenuCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+        var canvasGO = new GameObject("MenuCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
         var canvas = canvasGO.GetComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceCamera;
         canvas.worldCamera = menuCamera;
@@ -55,16 +64,16 @@ public class LaunchSceneBuilder : MonoBehaviour
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1920, 1080);
         scaler.matchWidthOrHeight = 0.5f;
-
         return canvas;
     }
 
     private Image BuildBackground(Canvas canvas)
     {
-        GameObject bgGO = new GameObject("Background", typeof(Image));
+        var bgGO = new GameObject("Background", typeof(Image));
         bgGO.transform.SetParent(canvas.transform, false);
         var img = bgGO.GetComponent<Image>();
-        Sprite sprite = Resources.Load<Sprite>(backgroundSpriteName);
+
+        var sprite = Resources.Load<Sprite>(backgroundResourceName);
         if (sprite != null)
         {
             img.sprite = sprite;
@@ -73,8 +82,8 @@ public class LaunchSceneBuilder : MonoBehaviour
         }
         else
         {
-            img.color = new Color(0.05f, 0.05f, 0.07f, 1f); // fallback dark tint
-            Debug.LogWarning($"LaunchSceneBuilder: Sprite '{backgroundSpriteName}' not found in Resources.");
+            img.color = fallbackBackgroundColor;
+            Debug.LogWarning($"MainMenuUI: Sprite '{backgroundResourceName}' not found in Resources.");
         }
 
         var rect = img.rectTransform;
@@ -85,24 +94,24 @@ public class LaunchSceneBuilder : MonoBehaviour
         return img;
     }
 
-    private void BuildButton(Transform parent, string label, Vector2 size, Vector2 offset)
+    private void BuildButton(Transform parent, string label, Vector2 size, Vector2 pos, Color color, UnityEngine.Events.UnityAction onClick, string name)
     {
-        GameObject btnGO = new GameObject("StartButton", typeof(Button), typeof(Image));
+        var btnGO = new GameObject(name, typeof(Button), typeof(Image));
         btnGO.transform.SetParent(parent, false);
 
         var img = btnGO.GetComponent<Image>();
-        img.color = new Color(0.18f, 0.43f, 0.78f, 0.92f);
+        img.color = color;
 
         var rect = btnGO.GetComponent<RectTransform>();
         rect.sizeDelta = size;
-        rect.anchoredPosition = offset;
+        rect.anchoredPosition = pos;
         rect.anchorMin = new Vector2(0.25f, 0.5f);
         rect.anchorMax = new Vector2(0.25f, 0.5f);
 
         var btn = btnGO.GetComponent<Button>();
-        btn.onClick.AddListener(OnStartClicked);
+        btn.onClick.AddListener(onClick);
 
-        GameObject txtGO = new GameObject("Text", typeof(Text));
+        var txtGO = new GameObject("Text", typeof(Text));
         txtGO.transform.SetParent(btnGO.transform, false);
         var txt = txtGO.GetComponent<Text>();
         txt.text = label;
@@ -110,6 +119,7 @@ public class LaunchSceneBuilder : MonoBehaviour
         txt.fontSize = 28;
         txt.color = Color.white;
         txt.alignment = TextAnchor.MiddleCenter;
+
         var txtRect = txtGO.GetComponent<RectTransform>();
         txtRect.anchorMin = Vector2.zero;
         txtRect.anchorMax = Vector2.one;
@@ -125,7 +135,15 @@ public class LaunchSceneBuilder : MonoBehaviour
         }
         else
         {
-            Debug.LogError("LaunchSceneBuilder: gameplaySceneName not set.");
+            Debug.LogError("MainMenuUI: gameplaySceneName not set.");
         }
+    }
+
+    private void OnQuitClicked()
+    {
+        Application.Quit();
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#endif
     }
 }
