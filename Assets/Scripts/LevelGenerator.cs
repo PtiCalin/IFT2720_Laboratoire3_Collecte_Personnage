@@ -51,6 +51,8 @@ public class LevelGenerator : MonoBehaviour
     private Vector3 cachedMazeCenter;
     private float cachedMazeWidth;
     private float cachedMazeDepth;
+    private bool[,] occupiedCells;
+    private List<Vector2Int> availableSpawnCells;
 
     private enum MazeDirection
     {
@@ -292,6 +294,9 @@ public class LevelGenerator : MonoBehaviour
                 }
             }
         }
+
+        occupiedCells = new bool[rows, columns];
+        availableSpawnCells = null;
     }
 
     private Vector3 GetCellCenterPosition(int row, int column)
@@ -347,6 +352,10 @@ public class LevelGenerator : MonoBehaviour
             player.transform.SetParent(levelParent.transform, true);
         }
 
+        int spawnColumn = Mathf.Clamp(playerStartCell.x, 0, cachedColumns - 1);
+        int spawnRow = Mathf.Clamp(playerStartCell.y, 0, cachedRows - 1);
+        ReserveCell(spawnRow, spawnColumn);
+
         // S'assurer qu'un Rigidbody est présent et configuré
         Rigidbody rb = player.GetComponent<Rigidbody>();
         if (rb == null)
@@ -399,22 +408,38 @@ public class LevelGenerator : MonoBehaviour
     {
         GameObject collectiblesParent = new GameObject("Collectibles");
         collectiblesParent.transform.parent = levelParent.transform;
+
+        EnsureSpawnCellPool();
+        int coinsPlaced = 0;
+        int treasuresPlaced = 0;
         
         // Créer les pièces
         for (int i = 0; i < numberOfCoins; i++)
         {
-            Vector3 randomPosition = GetRandomPositionInMaze(1f);
-            CreateCoin(randomPosition, collectiblesParent);
+            if (!TryReserveSpawnPosition(1f, 0.35f, out Vector3 position))
+            {
+                Debug.LogWarning("Impossible de placer toutes les pièces : plus de cellules disponibles sans collision.");
+                break;
+            }
+
+            CreateCoin(position, collectiblesParent);
+            coinsPlaced++;
         }
         
         // Créer les trésors
         for (int i = 0; i < numberOfTreasures; i++)
         {
-            Vector3 randomPosition = GetRandomPositionInMaze(1.5f);
-            CreateTreasure(randomPosition, collectiblesParent);
+            if (!TryReserveSpawnPosition(1.5f, 0.45f, out Vector3 position))
+            {
+                Debug.LogWarning("Impossible de placer tous les trésors : plus de cellules disponibles sans collision.");
+                break;
+            }
+
+            CreateTreasure(position, collectiblesParent);
+            treasuresPlaced++;
         }
         
-        Debug.Log($"{numberOfCoins} pièces et {numberOfTreasures} trésors créés");
+        Debug.Log($"{coinsPlaced} pièces et {treasuresPlaced} trésors créés");
     }
 
     /// <summary>
@@ -518,5 +543,74 @@ public class LevelGenerator : MonoBehaviour
         float x = Random.Range(-halfWidth + margin, halfWidth - margin);
         float z = Random.Range(-halfDepth + margin, halfDepth - margin);
         return new Vector3(x, height, z);
+    }
+
+    private void ReserveCell(int row, int column)
+    {
+        if (occupiedCells == null)
+        {
+            return;
+        }
+
+        if (row < 0 || row >= occupiedCells.GetLength(0) || column < 0 || column >= occupiedCells.GetLength(1))
+        {
+            return;
+        }
+
+        occupiedCells[row, column] = true;
+    }
+
+    private void EnsureSpawnCellPool()
+    {
+        if (cachedRows <= 0 || cachedColumns <= 0)
+        {
+            availableSpawnCells = null;
+            return;
+        }
+
+        if (occupiedCells == null || occupiedCells.GetLength(0) != cachedRows || occupiedCells.GetLength(1) != cachedColumns)
+        {
+            occupiedCells = new bool[cachedRows, cachedColumns];
+        }
+
+        availableSpawnCells ??= new List<Vector2Int>();
+        availableSpawnCells.Clear();
+
+        for (int row = 0; row < cachedRows; row++)
+        {
+            for (int column = 0; column < cachedColumns; column++)
+            {
+                if (!occupiedCells[row, column])
+                {
+                    availableSpawnCells.Add(new Vector2Int(row, column));
+                }
+            }
+        }
+    }
+
+    private bool TryReserveSpawnPosition(float height, float clearance, out Vector3 position)
+    {
+        position = Vector3.zero;
+
+        if (availableSpawnCells == null || availableSpawnCells.Count == 0)
+        {
+            return false;
+        }
+
+        int index = Random.Range(0, availableSpawnCells.Count);
+        Vector2Int cell = availableSpawnCells[index];
+        availableSpawnCells.RemoveAt(index);
+
+        ReserveCell(cell.x, cell.y);
+
+        Vector3 cellCenter = GetCellCenterPosition(cell.x, cell.y);
+        cellCenter.y = height;
+
+        float maxOffset = Mathf.Max(cachedCellHalf - clearance, 0f);
+        float offsetX = maxOffset > 0f ? Random.Range(-maxOffset, maxOffset) : 0f;
+        float offsetZ = maxOffset > 0f ? Random.Range(-maxOffset, maxOffset) : 0f;
+
+        position = cellCenter + new Vector3(offsetX, 0f, offsetZ);
+        return true;
     }
 }

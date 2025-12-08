@@ -7,6 +7,7 @@ public class PlayerController : MonoBehaviour
     public float jumpForce = 5f;
     [SerializeField] private float rotationSharpness = 12f;
     [SerializeField] private Transform referenceCamera;
+    [SerializeField] private Transform character;
     private Rigidbody rb;
     private bool isGrounded;
     private Vector3 desiredHorizontalVelocity;
@@ -71,6 +72,11 @@ public class PlayerController : MonoBehaviour
             Quaternion targetRotation = Quaternion.LookRotation(desiredLookDirection, Vector3.up);
             Quaternion smoothed = Quaternion.Slerp(rb.rotation, targetRotation, 1f - Mathf.Exp(-rotationSharpness * Time.fixedDeltaTime));
             rb.MoveRotation(smoothed);
+
+            if (character != null)
+            {
+                character.rotation = smoothed;
+            }
         }
     }
 
