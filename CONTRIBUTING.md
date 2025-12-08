@@ -352,7 +352,6 @@ Cherchez les labels:
 
 - **Issues**: Pour des questions spécifiques au projet
 - **Discussions**: Pour des discussions générales
-- **Email**: Contact direct avec les mainteneurs
 
 ### Ressources
 
@@ -367,10 +366,10 @@ Cherchez les labels:
 Merci à tous les contributeurs qui aident à améliorer ce projet!
 
 **Contributeurs principaux:**
-- [PtiCalin](https://github.com/PtiCalin) - Créateur et mainteneur principal
+- [PtiCalin](https://github.com/PtiCalin)
 
 ---
 
-**Des questions? N'hésitez pas à ouvrir une issue ou à contacter l'équipe!**
+**Des questions? N'hésitez pas à ouvrir une issue**
 
 **Bon développement! 🚀**
