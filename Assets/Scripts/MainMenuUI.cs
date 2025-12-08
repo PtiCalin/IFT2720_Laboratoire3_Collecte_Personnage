@@ -14,15 +14,16 @@ public class MainMenuUI : MonoBehaviour
     [SerializeField] private string gameplaySceneName = "JeuCollecte";
 
     [Header("Background")]
-    [SerializeField] private string backgroundResourceName = "LaunchMenuBackground";
+    [SerializeField] private string backgroundResourceName = "MainMenu"; // match attachment name
     [SerializeField] private Color fallbackBackgroundColor = new Color(0.05f, 0.05f, 0.07f, 1f);
 
     [Header("Button")]
     [SerializeField] private string buttonLabel = "Entrer";
     [SerializeField] private Vector2 buttonSize = new Vector2(320f, 96f);
-    [SerializeField] private Vector2 buttonPosition = new Vector2(-300f, 0f); // place over the banner
-    [SerializeField] private Color buttonColor = new Color(0.18f, 0.43f, 0.78f, 0.92f);
-    [SerializeField] private bool showQuitButton = true;
+    [SerializeField] private Vector2 buttonPosition = new Vector2(-300f, 0f); // will be centered
+    [SerializeField] private Color buttonTextColor = new Color32(0xAC, 0x96, 0x87, 0xFF); // #AC9687
+    [SerializeField] private Color buttonFillColor = new Color(1f, 1f, 1f, 0f); // transparent
+    [SerializeField] private bool showQuitButton = false;
 
     private UCamera menuCamera;
 
@@ -31,11 +32,7 @@ public class MainMenuUI : MonoBehaviour
         EnsureCamera();
         var canvas = BuildCanvas();
         var bg = BuildBackground(canvas);
-        BuildButton(bg.transform, buttonLabel, buttonSize, buttonPosition, buttonColor, OnStartClicked, "StartButton");
-        if (showQuitButton)
-        {
-            BuildButton(bg.transform, "Quitter", new Vector2(240f, 72f), buttonPosition + new Vector2(0f, -120f), new Color(0.3f, 0.1f, 0.1f, 0.9f), OnQuitClicked, "QuitButton");
-        }
+        BuildButton(bg.transform, buttonLabel, buttonSize, buttonPosition, buttonTextColor, buttonFillColor, OnStartClicked, "StartButton");
     }
 
     private void EnsureCamera()
@@ -50,6 +47,9 @@ public class MainMenuUI : MonoBehaviour
             camGO.transform.rotation = Quaternion.identity;
             camGO.AddComponent<AudioListener>();
         }
+        // Set camera background to black for menu
+        menuCamera.clearFlags = CameraClearFlags.SolidColor;
+        menuCamera.backgroundColor = new Color(0.05f, 0.05f, 0.07f, 1f);
     }
 
     private Canvas BuildCanvas()
@@ -91,6 +91,7 @@ public class MainMenuUI : MonoBehaviour
         rect.anchorMax = Vector2.one;
         rect.offsetMin = Vector2.zero;
         rect.offsetMax = Vector2.zero;
+        rect.localPosition = Vector3.zero;
         return img;
     }
 
@@ -100,7 +101,7 @@ public class MainMenuUI : MonoBehaviour
         btnGO.transform.SetParent(parent, false);
 
         var img = btnGO.GetComponent<Image>();
-        img.color = color;
+        img.color = buttonFillColor;
 
         var rect = btnGO.GetComponent<RectTransform>();
         rect.sizeDelta = size;
@@ -115,9 +116,9 @@ public class MainMenuUI : MonoBehaviour
         txtGO.transform.SetParent(btnGO.transform, false);
         var txt = txtGO.GetComponent<Text>();
         txt.text = label;
-        txt.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        txt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         txt.fontSize = 28;
-        txt.color = Color.white;
+        txt.color = buttonTextColor;
         txt.alignment = TextAnchor.MiddleCenter;
 
         var txtRect = txtGO.GetComponent<RectTransform>();
