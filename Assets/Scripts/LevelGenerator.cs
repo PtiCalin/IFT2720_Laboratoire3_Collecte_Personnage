@@ -255,13 +255,7 @@ public class LevelGenerator : MonoBehaviour
             heightOffset = b.extents.y + 0.05f;
         }
 
-        // Keep entrance cell but inset from the west opening so we start inside the corridor, not on the border/wall
-        float cellHalfSize = spacing * 0.5f;
-        float inset = Mathf.Max(0.5f, wallThickness + 0.2f); // stay clear of walls
-        float offsetDist = Mathf.Max(cellHalfSize - inset, 0.05f);
-        Vector3 entranceInset = Vector3.left * offsetDist; // west opening => move slightly left from center toward entrance
-
-        spawnPos += entranceInset;
+            // Spawn at entrance cell center; lift to rest on ground
         spawnPos.y = Mathf.Max(playerStartPosition.y, heightOffset);
         player.transform.position = spawnPos;
 
@@ -291,8 +285,13 @@ public class LevelGenerator : MonoBehaviour
 
         // Spawn coins
         int coinPlaced = 0;
-        for (int i = 0; i < numberOfCoins && TryReserveSpawnPosition(1f, 0.35f, out Vector3 pos); i++)
+        int coinAttempts = 0;
+        while (coinPlaced < numberOfCoins && coinAttempts < numberOfCoins * 4)
         {
+            coinAttempts++;
+            if (!TryReserveSpawnPosition(1f, 0.35f, out Vector3 pos))
+                break;
+
             GameObject coin = coinPrefab != null ? Instantiate(coinPrefab, pos, Quaternion.identity, parent.transform)
                 : GameObject.CreatePrimitive(PrimitiveType.Sphere);
             
@@ -320,8 +319,13 @@ public class LevelGenerator : MonoBehaviour
 
         // Spawn treasures
         int treasurePlaced = 0;
-        for (int i = 0; i < numberOfTreasures && TryReserveSpawnPosition(1.5f, 0.45f, out Vector3 pos); i++)
+        int treasureAttempts = 0;
+        while (treasurePlaced < numberOfTreasures && treasureAttempts < numberOfTreasures * 4)
         {
+            treasureAttempts++;
+            if (!TryReserveSpawnPosition(1.5f, 0.45f, out Vector3 pos))
+                break;
+
             GameObject treasure = treasurePrefab != null ? Instantiate(treasurePrefab, pos, Quaternion.identity, parent.transform)
                 : GameObject.CreatePrimitive(PrimitiveType.Cube);
             
@@ -347,7 +351,10 @@ public class LevelGenerator : MonoBehaviour
             treasurePlaced++;
         }
 
-        Debug.Log($"{coinPlaced} pièces et {treasurePlaced} trésors créés");
+        if (coinPlaced + treasurePlaced == 0)
+            Debug.LogWarning("Aucune pièce ni trésor n'a été généré. Vérifiez le nombre demandé et les cellules disponibles.");
+        else
+            Debug.Log($"{coinPlaced} pièces et {treasurePlaced} trésors créés");
     }
 
     private static void SetCollectibleField(string fieldName, Collectible target, object value)

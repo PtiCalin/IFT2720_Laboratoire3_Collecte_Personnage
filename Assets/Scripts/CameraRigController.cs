@@ -57,7 +57,7 @@ public class CameraRigController : MonoBehaviour
             birdsEyeTargetOrthographicSize = birdsEyeMinOrthographicSize;
         }
         camInput = new CameraInputActions();
-        camInput.Camera.Toggle.performed += ctx => ToggleCameraMode();
+        camInput.Toggle.performed += ctx => ToggleCameraMode();
     }
 
     private void Start()
@@ -196,7 +196,7 @@ public class CameraRigController : MonoBehaviour
             return;
         }
 
-        Vector2 mouseDelta = camInput.Camera.Look.ReadValue<Vector2>();
+        Vector2 mouseDelta = camInput.Look.ReadValue<Vector2>();
         yaw += mouseDelta.x * rotationSpeed * Time.deltaTime;
         pitch -= mouseDelta.y * rotationSpeed * verticalSensitivity * Time.deltaTime;
         pitch = ClampPitch(pitch);
@@ -213,7 +213,7 @@ public class CameraRigController : MonoBehaviour
 
     private void UpdateBirdsEye()
     {
-        if (!hasBirdsEyeCenter && target != null)
+        if (target != null)
         {
             SetCenter(target.position);
         }
