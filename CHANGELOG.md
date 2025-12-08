@@ -20,6 +20,9 @@ Tous les changements notables de ce projet seront documentés dans ce fichier.
 - `SceneSetup` attache désormais automatiquement la caméra third-person à la caméra principale créée.
 - `LevelGenerator` connecte le joueur généré au composant de caméra s'il est présent.
 
+### Documentation
+- Ajout d'une référence explicite au projet open source **SunnyValleyStudio/3rd-Person-Camera-And-Movement-system-in-Unity** comme inspiration pour le comportement de caméra.
+
 ---
 
 ## [4.0.0] - 2025-12-07

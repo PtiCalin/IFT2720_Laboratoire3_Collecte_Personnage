@@ -456,6 +456,7 @@ Pour changer les contrôles, modifiez les inputs dans `PlayerController.cs` :
 
 - Génération de labyrinthe : implémentation basée sur l'algorithme « Recursive Backtracker » (parcours en profondeur) popularisé par [Jamis Buck, *Maze Generation: Recursive Backtracking* (2010)](https://weblog.jamisbuck.org/2010/12/27/maze-generation-recursive-backtracking).
 - Exemple d'implémentation de référence : [Jamis Buck, *recursive-backtracker.rb* gist](https://gist.github.com/jamis/756896), utilisé comme guide pour structurer la génération procédurale.
+- Caméra third-person : inspiration tirée du projet open source [3rd Person Camera And Movement System](https://github.com/SunnyValleyStudio/3rd-Person-Camera-And-Movement-system-in-Unity) de **SunnyValleyStudio** (licence MIT).
 
 ## 👥 Contributeurs
 
