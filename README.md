@@ -259,7 +259,7 @@ Le niveau principal (`JeuCollecte.unity`) est généré dynamiquement par `Level
 - `Maze` : conteneur des murs extérieurs et intérieurs ; l'algorithme de backtracking produit un tracé unique à chaque exécution en fonction de `mazeRows`, `mazeColumns` et `cellSize`.
 - `Collectibles` : pièces et trésors instanciés aléatoirement avec leurs valeurs configurées.
 - `Player` : instancié depuis `playerPrefab` si présent, sinon un GameObject vide est préparé. La cellule `playerStartCell` garantit un point d'apparition dégagé des murs.
-- `GameManager`, `Main Camera`, `Directional Light` : peuvent être placés manuellement ou laissés à `SceneSetup` pour une configuration automatique ; la caméra principale reçoit `ThirdPersonCamera` et une caméra secondaire `BirdsEyeCamera` est générée pour la vue aérienne.
+- `GameManager`, `Main Camera`, `Directional Light` : peuvent être placés manuellement ou laissés à `SceneSetup` pour une configuration automatique ; la caméra principale ajoute `CameraRigController`, ce qui permet d'alterner entre l'orbite third-person et la vue aérienne sans multiplier les caméras.
 
 ### Réglages clés
 
@@ -336,61 +336,33 @@ int coinsTotal = GameManager.Instance.GetTotalCoins()
 int treasuresTotal = GameManager.Instance.GetTotalTreasures()
 ```
 
-### ThirdPersonCamera.cs
+### CameraRigController.cs
 
-Caméra orbitale attachée au joueur pour une expérience third-person fluide.
+Caméra unifiée qui combine l'orbite third-person et la vue aérienne orthographique.
 
 **Fonctionnalités clés:**
 - Suivi automatique du joueur taggé `Player` si aucune cible n'est fournie.
-- Contrôles de rotation via la souris avec limites de pitch configurables.
-- Offset et distance ajustables, lissage indépendant position/rotation.
-- Gestion du verrouillage de curseur lorsque la vue third-person est active.
+- Contrôles de rotation à la souris avec limites de pitch configurables.
+- Bascule instantanée entre les modes third-person et bird view via une touche (`Tab` par défaut).
+- Gestion du curseur selon le mode actif (verrouillé en third-person, libre en vue aérienne).
+- Configuration dynamique des bornes et du centre en fonction du labyrinthe généré.
 
 **Paramètres configurables:**
 ```csharp
+[SerializeField] private CameraRigController.CameraMode startMode;
+[SerializeField] private KeyCode toggleKey = KeyCode.Tab;
 [SerializeField] private Vector3 targetOffset = new Vector3(0f, 1.6f, 0f);
 [SerializeField] private float distance = 6f;
 [SerializeField] private float rotationSpeed = 120f;
 [SerializeField] private float verticalSensitivity = 0.8f;
 [SerializeField] private float minPitch = -30f;
 [SerializeField] private float maxPitch = 70f;
-[SerializeField] private float positionSmoothing = 10f;
-[SerializeField] private float rotationSmoothing = 12f;
-```
-
-### BirdsEyeCamera.cs
-
-Vue orthographique centrée sur le labyrinthe pour une analyse tactique.
-
-**Fonctionnalités clés:**
-- Centre automatiquement sa position sur le cœur du labyrinthe généré.
-- Hauteur, lissage de suivi et taille orthographique adaptables.
-- Méthodes utilitaires pour mettre à jour les bornes et se repositionner instantanément.
-
-**Paramètres configurables:**
-```csharp
-[SerializeField] private float height = 35f;
-[SerializeField] private float followSmoothing = 6f;
-[SerializeField] private float orthoLerpSpeed = 6f;
-[SerializeField] private float minOrthographicSize = 15f;
-```
-
-### CameraSwitcher.cs
-
-Orchestre le basculement entre la caméra third-person et la vue aérienne.
-
-**Fonctionnalités clés:**
-- Activation/désactivation des caméras et audio listeners associés.
-- Gestion optionnelle du curseur lors du passage en vue aérienne.
-- Initialisation automatique via `SceneSetup` et prise en charge du raccourci `Tab`.
-
-**Paramètres configurables:**
-```csharp
-[SerializeField] private Camera thirdPersonCamera;
-[SerializeField] private Camera birdsEyeCamera;
-[SerializeField] private KeyCode toggleKey = KeyCode.Tab;
-[SerializeField] private bool startWithThirdPerson = true;
-[SerializeField] private bool unlockCursorInBirdView = true;
+[SerializeField] private float thirdPersonPositionSmoothing = 10f;
+[SerializeField] private float thirdPersonRotationSmoothing = 12f;
+[SerializeField] private float birdsEyeHeight = 35f;
+[SerializeField] private float birdsEyeFollowSmoothing = 6f;
+[SerializeField] private float birdsEyeOrthoLerpSpeed = 6f;
+[SerializeField] private float birdsEyeMinOrthographicSize = 15f;
 ```
 
 ## ⚙️ Configuration
@@ -434,22 +406,26 @@ Dans Unity, sélectionnez le GameObject du joueur et ajustez les paramètres dan
 
 ### Configuration de la Caméra
 
-Sélectionnez la caméra principale (`Main Camera`) et ajustez `ThirdPersonCamera` :
+Sélectionnez la caméra principale (`Main Camera`) et ajustez `CameraRigController` :
 
+**Paramètres généraux :**
+- `Start Mode` : mode actif au lancement (third-person ou bird view).
+- `Toggle Key` : touche utilisée pour alterner entre les modes (`Tab` par défaut).
+- `Lock Cursor In Third Person` / `Unlock Cursor In Birds Eye` : comportement du curseur selon le mode.
+
+**Mode third-person :**
 - `Target` : Transform du joueur (laisser vide pour auto-détection).
-- `Target Offset` : Hauteur et décalage latéral du point de pivot.
-- `Distance` : Rayon d'orbite autour du personnage.
+- `Target Offset` : hauteur et décalage du point de pivot.
+- `Distance` : rayon d'orbite autour du personnage.
 - `Rotation Speed` / `Vertical Sensitivity` : vitesse de rotation horizontale et verticale.
-- `Min/Max Pitch` : bornes verticales pour éviter les angles extrêmes.
-- `Position/Rotation Smoothing` : lissage du suivi.
-- `Lock Cursor` : verrouillage du curseur quand la vue third-person est active.
+- `Min/Max Pitch` : limites verticales pour éviter les angles extrêmes.
+- `Third Person Position/Rotation Smoothing` : lissages pour le suivi.
 
-Pour la vue aérienne (`BirdsEyeCamera`) :
-
-- `Height` : altitude de la caméra orthographique.
-- `Follow Smoothing` : vitesse de recentrage vers le centre du labyrinthe.
-- `Ortho Lerp Speed` : rapidité d'ajustement de la taille orthographique.
-- `Min Orthographic Size` : taille minimale pour la scène.
+**Mode bird view :**
+- `Birds Eye Height` : altitude de la caméra orthographique.
+- `Birds Eye Follow Smoothing` : vitesse de recentrage vers le centre configuré.
+- `Birds Eye Ortho Lerp Speed` : rapidité d'ajustement de la taille orthographique.
+- `Birds Eye Min Orthographic Size` : taille minimale pour englober le labyrinthe.
 
 ## 🛠️ Technologies Utilisées
 

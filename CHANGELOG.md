@@ -14,11 +14,11 @@ Tous les changements notables de ce projet seront documentés dans ce fichier.
 - Power-ups et bonus
 
 ### Ajouté
-- Caméra third-person orbitale (`ThirdPersonCamera`) avec rotation 360° autour du joueur et lissage paramétrable.
+- Caméra unifiée (`CameraRigController`) combinant l'orbite third-person et la vue aérienne.
 
 ### Modifié
-- `SceneSetup` attache désormais automatiquement la caméra third-person à la caméra principale créée.
-- `LevelGenerator` connecte le joueur généré au composant de caméra s'il est présent.
+- `SceneSetup` attache désormais automatiquement `CameraRigController` à la caméra principale créée.
+- `LevelGenerator` connecte le joueur généré au nouveau contrôleur de caméra unifié lorsqu'il est présent.
 
 ### Documentation
 - Ajout d'une référence explicite au projet open source **SunnyValleyStudio/3rd-Person-Camera-And-Movement-system-in-Unity** comme inspiration pour le comportement de caméra.

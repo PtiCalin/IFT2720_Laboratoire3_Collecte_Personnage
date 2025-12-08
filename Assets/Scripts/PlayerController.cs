@@ -5,17 +5,26 @@ public class PlayerController : MonoBehaviour
     [Header("Paramètres de Déplacement")]
     public float moveSpeed = 5f;
     public float jumpForce = 5f;
+    [SerializeField] private float rotationSharpness = 12f;
+    [SerializeField] private Transform referenceCamera;
     private Rigidbody rb;
     private bool isGrounded;
     private Vector3 desiredHorizontalVelocity;
+    private Vector3 desiredLookDirection;
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
+        CacheCamera();
     }
 
     void Update()
     {
+        if (referenceCamera == null)
+        {
+            CacheCamera();
+        }
+
         float moveHorizontal = Input.GetAxisRaw("Horizontal");
         float moveVertical = Input.GetAxisRaw("Vertical");
 
@@ -24,7 +33,26 @@ public class PlayerController : MonoBehaviour
         {
             input.Normalize();
         }
-        desiredHorizontalVelocity = input * moveSpeed;
+
+        if (input.sqrMagnitude > 0f)
+        {
+            Vector3 forward = Vector3.forward;
+            Vector3 right = Vector3.right;
+            if (referenceCamera != null)
+            {
+                forward = Vector3.ProjectOnPlane(referenceCamera.forward, Vector3.up).normalized;
+                right = Vector3.ProjectOnPlane(referenceCamera.right, Vector3.up).normalized;
+            }
+
+            Vector3 moveDirection = (right * input.x + forward * input.z).normalized;
+            desiredHorizontalVelocity = moveDirection * moveSpeed;
+            desiredLookDirection = moveDirection;
+        }
+        else
+        {
+            desiredHorizontalVelocity = Vector3.zero;
+            desiredLookDirection = Vector3.zero;
+        }
 
         if (Input.GetButtonDown("Jump") && isGrounded)
         {
@@ -34,9 +62,16 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
-        Vector3 currentVelocity = rb.velocity;
+        Vector3 currentVelocity = rb.linearVelocity;
         Vector3 velocity = new Vector3(desiredHorizontalVelocity.x, currentVelocity.y, desiredHorizontalVelocity.z);
-        rb.velocity = velocity;
+        rb.linearVelocity = velocity;
+
+        if (desiredLookDirection.sqrMagnitude > 0.0001f)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(desiredLookDirection, Vector3.up);
+            Quaternion smoothed = Quaternion.Slerp(rb.rotation, targetRotation, 1f - Mathf.Exp(-rotationSharpness * Time.fixedDeltaTime));
+            rb.MoveRotation(smoothed);
+        }
     }
 
     void OnCollisionEnter(Collision collision)
@@ -62,6 +97,20 @@ public class PlayerController : MonoBehaviour
         {
             isGrounded = false;
             Debug.Log("Joueur a quitté le sol");
+        }
+    }
+
+    private void CacheCamera()
+    {
+        if (referenceCamera != null)
+        {
+            return;
+        }
+
+        Camera mainCamera = Camera.main;
+        if (mainCamera != null)
+        {
+            referenceCamera = mainCamera.transform;
         }
     }
 }

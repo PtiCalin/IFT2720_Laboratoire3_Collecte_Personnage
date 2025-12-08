@@ -118,12 +118,15 @@ public class LevelGenerator : MonoBehaviour
         cachedMazeDepth = rows * spacing;
         cachedMazeCenter = GetCellCenterPosition(rows / 2, columns / 2);
 
-        BirdsEyeCamera birdsEye = FindFirstObjectByType<BirdsEyeCamera>(FindObjectsInactive.Include);
-        if (birdsEye != null)
+        CameraRigController cameraRig = FindFirstObjectByType<CameraRigController>(FindObjectsInactive.Include);
+        if (cameraRig != null)
         {
-            birdsEye.SetCenter(cachedMazeCenter);
-            birdsEye.ConfigureBounds(cachedMazeWidth, cachedMazeDepth);
-            birdsEye.SnapToCenter();
+            cameraRig.SetCenter(cachedMazeCenter);
+            cameraRig.ConfigureBounds(cachedMazeWidth, cachedMazeDepth);
+            if (cameraRig.CurrentMode == CameraRigController.CameraMode.BirdsEye)
+            {
+                cameraRig.SnapToCenter();
+            }
         }
 
         Debug.Log($"Labyrinthe généré ({rows}x{columns}) avec un tracé aléatoire.");
@@ -376,11 +379,14 @@ public class LevelGenerator : MonoBehaviour
         playerController.moveSpeed = playerMoveSpeed;
         playerController.jumpForce = playerJumpForce;
 
-        ThirdPersonCamera followCamera = FindFirstObjectByType<ThirdPersonCamera>(FindObjectsInactive.Include);
-        if (followCamera != null)
+        CameraRigController cameraRig = FindFirstObjectByType<CameraRigController>(FindObjectsInactive.Include);
+        if (cameraRig != null)
         {
-            followCamera.SetTarget(player.transform);
-            followCamera.SnapToTarget();
+            cameraRig.SetTarget(player.transform);
+            if (cameraRig.CurrentMode == CameraRigController.CameraMode.ThirdPerson)
+            {
+                cameraRig.SnapToTarget();
+            }
         }
 
         Debug.Log("Joueur créé à la position: " + spawnPosition + (playerPrefab != null ? " avec le modèle fourni." : " via un objet placeholder."));
