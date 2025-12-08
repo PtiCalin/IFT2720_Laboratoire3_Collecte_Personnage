@@ -7,10 +7,12 @@ public class PlayerController : MonoBehaviour
     public float jumpForce = 5f;
     [SerializeField] private float rotationSpeed = 12f;
     [SerializeField] private Transform character;
+    [SerializeField] private bool allowDoubleJump = true;
     
     private Rigidbody rb;
     private Transform cam;
     private bool isGrounded;
+    private int jumpsUsed = 0;
     private InputSystem_Actions inputActions;
 
     void Awake()
@@ -43,8 +45,21 @@ public class PlayerController : MonoBehaviour
 
         // Movement is handled in OnMove callback
         // Jump input
-        if (inputActions.Player.Attack.triggered && isGrounded)
-            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+        if (inputActions.Player.Jump.triggered)
+        {
+            if (isGrounded)
+            {
+                jumpsUsed = 0;
+            }
+
+            bool canJump = isGrounded || (allowDoubleJump && jumpsUsed < 1);
+            if (canJump)
+            {
+                jumpsUsed++;
+                rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+                isGrounded = false;
+            }
+        }
     }
 
     private void OnMove(InputAction.CallbackContext context)
@@ -68,10 +83,10 @@ public class PlayerController : MonoBehaviour
         }
 
         // Apply horizontal velocity while preserving vertical
-        Vector3 velocity = rb.linearVelocity;
+        Vector3 velocity = rb.velocity;
         velocity.x = moveDir.x;
         velocity.z = moveDir.z;
-        rb.linearVelocity = velocity;
+        rb.velocity = velocity;
 
         // Rotate character to face movement direction
         if (moveDir.sqrMagnitude > 0.01f)
@@ -88,13 +103,19 @@ public class PlayerController : MonoBehaviour
     void OnCollisionEnter(Collision collision)
     {
         if (IsGroundContact(collision))
+        {
             isGrounded = true;
+            jumpsUsed = 0;
+        }
     }
 
     void OnCollisionStay(Collision collision)
     {
         if (IsGroundContact(collision))
+        {
             isGrounded = true;
+            jumpsUsed = 0;
+        }
     }
 
     void OnCollisionExit(Collision collision)

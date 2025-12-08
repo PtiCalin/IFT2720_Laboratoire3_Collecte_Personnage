@@ -39,8 +39,10 @@ public class CameraRigController : MonoBehaviour
     private float yaw;
     private float pitch;
     private Vector3 birdsEyeCenter;
-    private bool hasBirdsEyeCenter;
     private float birdsEyeTargetOrthographicSize;
+    private float boundsHalfX;
+    private float boundsHalfZ;
+    private bool hasBounds;
     // Input actions consolidated here so the rig is self-contained
     private InputAction toggleAction;
     private InputAction lookAction;
@@ -49,7 +51,6 @@ public class CameraRigController : MonoBehaviour
     {
         cachedCamera = GetComponent<Camera>();
         birdsEyeCenter = Vector3.zero;
-        hasBirdsEyeCenter = false;
         if (cachedCamera != null && cachedCamera.orthographic)
         {
             birdsEyeTargetOrthographicSize = Mathf.Max(cachedCamera.orthographicSize, birdsEyeMinOrthographicSize);
@@ -58,15 +59,10 @@ public class CameraRigController : MonoBehaviour
         {
             birdsEyeTargetOrthographicSize = birdsEyeMinOrthographicSize;
         }
-<<<<<<< HEAD
         // Build input actions inline (Tab to toggle, Mouse delta to look)
         toggleAction = new InputAction(type: InputActionType.Button, binding: "<Keyboard>/tab");
         lookAction = new InputAction(type: InputActionType.Value, binding: "<Mouse>/delta");
         toggleAction.performed += ctx => ToggleCameraMode();
-=======
-        camInput = new CameraInputActions();
-        camInput.Toggle.performed += ctx => ToggleCameraMode();
->>>>>>> 984890559af8cec8fcaf9a59c218b50d0ff6fe26
     }
 
     private void Start()
@@ -131,12 +127,21 @@ public class CameraRigController : MonoBehaviour
 
     public void SetCenter(Vector3 center)
     {
-        birdsEyeCenter = new Vector3(center.x, 0f, center.z);
-        hasBirdsEyeCenter = true;
+        Vector3 clamped = new Vector3(center.x, 0f, center.z);
+        if (hasBounds)
+        {
+            clamped.x = Mathf.Clamp(clamped.x, -boundsHalfX, boundsHalfX);
+            clamped.z = Mathf.Clamp(clamped.z, -boundsHalfZ, boundsHalfZ);
+        }
+        birdsEyeCenter = clamped;
     }
 
     public void ConfigureBounds(float width, float depth)
     {
+        boundsHalfX = width * 0.5f;
+        boundsHalfZ = depth * 0.5f;
+        hasBounds = true;
+
         float halfExtent = Mathf.Max(width, depth) * 0.5f;
         birdsEyeTargetOrthographicSize = Mathf.Max(halfExtent, birdsEyeMinOrthographicSize);
         if (cachedCamera != null && currentMode == CameraMode.BirdsEye)
@@ -206,11 +211,7 @@ public class CameraRigController : MonoBehaviour
             return;
         }
 
-<<<<<<< HEAD
         Vector2 mouseDelta = lookAction.ReadValue<Vector2>();
-=======
-        Vector2 mouseDelta = camInput.Look.ReadValue<Vector2>();
->>>>>>> 984890559af8cec8fcaf9a59c218b50d0ff6fe26
         yaw += mouseDelta.x * rotationSpeed * Time.deltaTime;
         pitch -= mouseDelta.y * rotationSpeed * verticalSensitivity * Time.deltaTime;
         pitch = ClampPitch(pitch);

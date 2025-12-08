@@ -58,7 +58,6 @@ public class LevelGenerator : MonoBehaviour
     {
         GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
         ground.name = "Ground";
-        ground.tag = "Ground";
         ground.transform.SetParent(levelParent.transform);
         ground.transform.localScale = groundScale;
         

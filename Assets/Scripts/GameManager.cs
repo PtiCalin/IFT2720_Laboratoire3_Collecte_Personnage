@@ -8,9 +8,11 @@ public class GameManager : MonoBehaviour
     [Header("UI References")]
     [SerializeField] private TextMeshProUGUI coinsText;
     [SerializeField] private TextMeshProUGUI treasuresText;
+    [SerializeField] private TextMeshProUGUI scoreText;
 
-    private int totalCoins = 0;
-    private int totalTreasures = 0;
+    private int coinCount = 0;
+    private int treasureCount = 0;
+    private int totalScore = 0;
 
     private void Awake()
     {
@@ -31,19 +33,18 @@ public class GameManager : MonoBehaviour
 
     public void AddPoints(int points, bool isTreasure)
     {
-        // Add points based on collectible type
+        totalScore += points;
         if (isTreasure)
         {
-            totalTreasures += points;
-            Debug.Log($"Treasure collected! Total: {totalTreasures}");
+            treasureCount++;
+            Debug.Log($"Treasure collected! Count: {treasureCount}, Score: {totalScore}");
         }
         else
         {
-            totalCoins += points;
-            Debug.Log($"Coin collected! Total: {totalCoins}");
+            coinCount++;
+            Debug.Log($"Coin collected! Count: {coinCount}, Score: {totalScore}");
         }
 
-        // Update the UI display
         UpdateUI();
     }
 
@@ -51,17 +52,17 @@ public class GameManager : MonoBehaviour
     {
         // Update coin counter
         if (coinsText != null)
-        {
-            coinsText.text = $"Coins: {totalCoins}";
-        }
+            coinsText.text = $"Coins: {coinCount}";
 
         // Update treasure counter
         if (treasuresText != null)
-        {
-            treasuresText.text = $"Treasures: {totalTreasures}";
-        }
+            treasuresText.text = $"Treasures: {treasureCount}";
+
+        if (scoreText != null)
+            scoreText.text = $"Score: {totalScore}";
     }
 
-    public int GetTotalCoins() => totalCoins;
-    public int GetTotalTreasures() => totalTreasures;
+    public int GetTotalCoins() => coinCount;
+    public int GetTotalTreasures() => treasureCount;
+    public int GetTotalScore() => totalScore;
 }
