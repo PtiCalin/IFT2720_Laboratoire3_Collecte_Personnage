@@ -22,7 +22,7 @@ This document provides a complete step-by-step guide to set up and test the Coll
 - [x] In the **Project** window, find `Assets/InputSystem_Actions.inputactions`
 - [x] Right-click it and select **"Generate C# Class"**
 - [x] This creates `InputSystem_Actions.cs` in your Scripts folder (it should appear automatically)
-- [x] This class allows PlayerController to read input from the configured actions
+- [x] This class allows Player to read input from the configured actions
 
 ### 3. Customize Input Bindings (Optional)
 
@@ -35,16 +35,17 @@ This document provides a complete step-by-step guide to set up and test the Coll
 
 ### 4. Set Up Scene Hierarchy
 
-Create a new scene or use an existing one. The LevelGenerator script will automatically create most elements, but you need to set up the core components.
+Create a new scene or use an existing one. The Level script will automatically create most elements, but you need to set up the core components.
 
-#### Add Scene Generator
+#### Add Scene
 
-- [x] Create empty GameObject: **GameObject > Create Empty** (name it "SceneGenerator")
+- [x] Create empty GameObject: **GameObject > Create Empty** (name it "Scene")
+- [x] Add **Scene** script component (**Component > Scripts > Scene**)
 
-#### Add Level Generator (Core Game Logic)
+#### Add Level (Core Game Logic)
 
-- [x] Create empty GameObject: **GameObject > Create Empty** (name it "LevelGenerator")
-- [x] Add **LevelGenerator** script component (**Component > Scripts > LevelGenerator**)
+- [x] Create empty GameObject: **GameObject > Create Empty** (name it "Level")
+- [x] Add **Level** script component (**Component > Scripts > Level**)
 In Inspector, configure:
 - [x] **Ground Material**: Drag a material asset (or leave empty for default white)
 - [x] **Wall Material**: Drag a material asset for maze walls
@@ -53,54 +54,54 @@ In Inspector, configure:
 - [x] **Coin Prefab/Treasure Prefab**: Drag prefabs (or leave empty for primitives)
 - [x] Adjust other settings: maze rows/columns, cell size, player speed/jump force, collectible counts
 
-#### Add Camera Rig (Camera System)
+#### Add Camera (Camera System)
 
-- Create empty GameObject: **GameObject > Create Empty** (name it "CameraRig")
-- Add **Camera** component (**Component > Camera**)
-- Add **CameraRigController** script component (**Component > Scripts > CameraRigController**)
-- In Inspector, configure CameraRigController:
+- [x] Create empty GameObject: **GameObject > Create Empty** (name it "CameraRig")
+- [x] Add **Camera** component (**Component > Camera**)
+- [x] Add **Camera** script component (**Component > Scripts > Camera**) on the same object
+- [x] In Inspector, configure Camera:
   - **Start Mode**: Choose **ThirdPerson** (orbit camera) or **BirdsEye** (top-down)
-  - **Target**: Leave empty (LevelGenerator will automatically set this to the player)
+  - **Target**: Leave empty (Level will automatically set this to the player)
   - **Distance**: Adjust camera distance from player (for ThirdPerson mode)
   - **Rotation Speed**: Camera rotation sensitivity
   - **Birds Eye Height**: Height for top-down view
   - Other settings: smoothing, bounds, etc.
 
-#### Optional: Add GameManager (Score/UI Management)
+#### Optional: Add UI (Score/UI Management)
 
-- Create empty GameObject: **GameObject > Create Empty** (name it "GameManager")
-- Add **GameManager** script component if you have UI elements for score display
-- Configure any UI canvases or text elements for displaying collected items
+- [x] Create empty GameObject: **GameObject > Create Empty** (name it "UI")
+- [x] Add **UI** script component if you have UI elements for score display
+- [x] Configure any UI canvases or text elements for displaying collected items
 
 ### 5. Player/Character Element Integration
 
-The LevelGenerator automatically creates the player character when the scene starts, but here's how it integrates:
+The Level script automatically creates the player character when the scene starts, but here's how it integrates:
 
-#### Automatic Player Creation (via LevelGenerator)
+#### Automatic Player Creation (via Level)
 
-- When you press Play, LevelGenerator.Start() calls CreatePlayer()
-- This creates a GameObject named "Player" (or uses your prefab)
-- Adds Rigidbody, CapsuleCollider, and PlayerController components
-- Positions player at maze entrance
-- Links camera target automatically
+- [x] When you press Play, `Level.Start()` calls `CreatePlayer()`
+- [x] This creates a GameObject named "Player" (or uses your prefab)
+- [x] Adds Rigidbody, CapsuleCollider, and Player components
+- [x] Positions player at maze entrance
+- [x] Links camera target automatically
 
 #### Manual Player Setup (Alternative)
 
 For manual control:
 
-- Create empty GameObject: **GameObject > Create Empty** (name it "Player")
-- Add **Rigidbody** component (**Component > Physics > Rigidbody**)
-- Add **Capsule Collider** (**Component > Physics > Capsule Collider**)
-- Add **PlayerController** script (**Component > Scripts > PlayerController**)
-- In PlayerController Inspector:
+- [x] Create empty GameObject: **GameObject > Create Empty** (name it "Player")
+- [x] Add **Rigidbody** component (**Component > Physics > Rigidbody**)
+- [x] Add **Capsule Collider** (**Component > Physics > Capsule Collider**)
+- [x] Add **Player** script (**Component > Scripts > Player**)
+- [x] In Player Inspector:
   - Set **Move Speed** and **Jump Force**
   - Assign **Character** transform if using a child model
-- Position manually or let LevelGenerator handle it
+- [x] Position manually or let `Level` handle it
 
 #### Camera Linking to Character
 
-- The CameraRigController automatically finds and follows the player via `FindFirstObjectByType<CameraRigController>()`
-- LevelGenerator calls `cameraRig.SetTarget(player.transform)` and `cameraRig.ConfigureBounds()`
+- The Camera automatically finds and follows the player via `FindFirstObjectByType<Camera>()`
+- Level calls `cameraRig.SetTarget(player.transform)` and `cameraRig.ConfigureBounds()`
 - For ThirdPerson mode: Camera orbits around player with mouse look
 - For BirdsEye mode: Camera stays above player with orthographic projection
 - Camera bounds are set to match maze size for proper framing
@@ -109,49 +110,49 @@ For manual control:
 
 LevelGenerator automatically spawns collectibles:
 
-- **Coins**: Spherical objects with rotation/bobbing animation
-- **Treasures**: Cubical objects with higher point value
-- Placed randomly in maze cells, avoiding walls and player spawn
-- Each has Collectible component with configurable properties
-- Trigger colliders for collection detection
+- [x] **Coins**: Spherical objects with rotation/bobbing animation
+- [x] **Treasures**: Cubical objects with higher point value
+- [x] Placed randomly in maze cells, avoiding walls and player spawn
+- [x] Each has Collectible component with configurable properties
+- [x] Trigger colliders for collection detection
 
 ### 7. Full Element Integration Steps
 
-1. **Scene Setup**: Add LevelGenerator and CameraRig as described
+1. **Scene Setup**: Add Level and Camera as described
 2. **Material Assignment**: Drag materials into LevelGenerator Inspector slots
 3. **Prefab Assignment**: Drag player/collectible prefabs if available
 4. **Input Configuration**: Customize keys in Input Actions editor
-5. **Camera Configuration**: Choose mode and adjust settings in CameraRigController
+5. **Camera Configuration**: Choose mode and adjust settings in Camera
 6. **Play Mode**: Press Play to generate level and test
 
 ### 8. Test in Play Mode
 
-- Press **Play** in Unity Editor
-- The LevelGenerator will automatically:
-  - Create ground plane with assigned material
-  - Generate procedural maze with walls
-  - Spawn player at entrance with physics components
-  - Place collectibles randomly throughout maze
-  - Position camera and link it to player
-  - Configure camera bounds to fit maze
-- **Controls should now work:**
-  - Use configured keys (WASD/Arrows by default) to move player
-  - Space (or configured jump key) to jump when grounded
-  - Camera follows player automatically (orbit in ThirdPerson, top-down in BirdsEye)
-  - Collect items by walking into them
-- **Verify Integration:**
+- [x] Press **Play** in Unity Editor
+- [x] The Level will automatically:
+  - [x] Create ground plane with assigned material
+  - [x] Generate procedural maze with walls
+  - [x] Spawn player at entrance with physics components
+  - [x] Place collectibles randomly throughout maze
+  - [x] Position camera and link it to player
+  - [x] Configure camera bounds to fit maze
+**Controls should now work:**
+  - [x] Use configured keys (WASD/Arrows by default) to move player
+  - [x] Space (or configured jump key) to jump when grounded
+  - [x] Camera follows player automatically (orbit in ThirdPerson, top-down in BirdsEye)
+  - [x] Collect items by walking into them
+**Verify Integration:**
   - Player moves relative to camera direction
   - Camera stays within maze bounds
-  - Collectibles disappear on contact and update score (if GameManager present)
+  - Collectibles disappear on contact and update score (if UI present)
   - Maze has clear entrance/exit paths
 
 ### 9. Troubleshooting
 
-- **No movement:** Check that `InputSystem_Actions.cs` was generated and PlayerController has no compilation errors
-- **Camera not following:** Ensure CameraRigController is in scene and LevelGenerator finds it (check Console for "CameraRig not found" warnings)
-- **Materials not applying:** Assign them manually in LevelGenerator Inspector; ensure materials exist in Assets
+- **No movement:** Check that `InputSystem_Actions.cs` was generated and `Player` has no compilation errors
+- **Camera not following:** Ensure `Camera` script is in scene and `Level` finds it (check Console for warnings)
+- **Materials not applying:** Assign them manually in `Level` Inspector; ensure materials exist in Assets
 - **Input not customizable:** Make sure you saved changes in Input Actions editor; restart Unity if needed
-- **Player not spawning:** Check LevelGenerator Inspector for prefab assignments; ensure no compilation errors
+- **Player not spawning:** Check `Level` Inspector for prefab assignments; ensure no compilation errors
 - **Collectibles not spawning:** Verify maze generation completes; check Console for placement warnings
 - **Physics issues:** Ensure Ground has "Ground" tag; check Rigidbody settings on player
 - **Input System errors:** Confirm package is installed and Active Input Handling is set correctly
@@ -159,9 +160,9 @@ LevelGenerator automatically spawns collectibles:
 ### 10. Advanced Testing
 
 - **Change Camera Modes:** Press Tab (configurable) to switch between ThirdPerson and BirdsEye
-- **Test Different Mazes:** Modify rows/columns in LevelGenerator and restart scene
+- **Test Different Mazes:** Modify rows/columns in Level and restart scene
 - **Custom Controls:** Add new bindings in Input Actions (e.g., gamepad support)
 - **Performance:** Monitor frame rate with larger mazes; adjust cell size if needed
 - **Edge Cases:** Test with no materials assigned, no prefabs, extreme maze sizes
 
-The PlayerController now uses the Input System, allowing full control customization in the editor without code changes. The LevelGenerator handles all procedural generation and integration automatically. If you encounter issues, check the Unity Console for detailed error messages and ensure all scripts compile successfully.
+The `Player` now uses the Input System, allowing full control customization in the editor without code changes. The `Level` handles all procedural generation and integration automatically. If you encounter issues, check the Unity Console for detailed error messages and ensure all scripts compile successfully.

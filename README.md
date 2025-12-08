@@ -6,7 +6,7 @@ Projet Unity 3D pour le cours IFT2720. Le générateur de niveau construit un la
 
 - Génération procédurale de labyrinthe uniques avec entrée et sortie uniques.
 - Joueur contrôlé par un `Rigidbody` simple (déplacements caméra-relatifs et saut).
-- Pièces et trésors animés qui attribuent des points au `GameManager`.
+- Pièces et trésors animés qui attribuent des points au `UI`.
 - Caméra unique basculant entre orbite 3e personne et vue aérienne.
 - Matériaux recherchés automatiquement dans `Assets/Materials` (support Poliigon).
 
@@ -43,7 +43,7 @@ Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de
 - 📊 **Suivi des scores** - compteurs séparés pour pièces et trésors
 - 🔢 **Points configurables** - valeur assignable par type d'objet
 - 📈 **Affichage temps réel** - mise à jour immédiate de l'UI
-- 🎯 **GameManager Singleton** - gestion centralisée du score global
+- 🎯 **UI Singleton** - gestion centralisée du score global
 
 ### Optimisations et Améliorations Techniques
 
@@ -150,11 +150,12 @@ IFT2720_Laboratoire3_Collecte_Personnage/
 │   │   ├── JeuCollecte.unity          # Scène principale du jeu
 │   │   └── SampleScene.unity          # Scène d'exemple
 │   ├── Scripts/
-│   │   ├── LevelGenerator             # Crée le niveau
-│   │   ├── CameraControls             # Contrôle des caméras
-│   │   ├── PlayerController.cs        # Contrôle du personnage
+│   │   ├── Scene.cs                   # Setup global (lumière/caméra/UI)
+│   │   ├── Level.cs                   # Crée le niveau
+│   │   ├── Camera.cs                  # Contrôle des caméras
+│   │   ├── Player.cs                  # Contrôle du personnage
 │   │   ├── Collectible.cs             # Logique des objets collectibles
-│   │   └── GameManager.cs             # Gestion de l'état du jeu
+│   │   └── UI.cs                      # Gestion de l'interface et du score
 │   ├── Settings/
 │   │   └── *.asset                    # Configuration URP
 │   └── TutorialInfo/
@@ -177,7 +178,7 @@ IFT2720_Laboratoire3_Collecte_Personnage/
 **Paramètres configurables:**
 
 ```csharp
-// Level generator
+// Level
 
    // Sol
    [SerializeField] private Vector3 groundScale; 
@@ -207,7 +208,7 @@ IFT2720_Laboratoire3_Collecte_Personnage/
    [SerializeField] private float wallThickness;
    [SerializeField] private Material wallMaterial;
 
-// PlayerController
+// Player
 
 [SerializeField] private float maxSpeed;
 [SerializeField] private float acceleration;
@@ -233,9 +234,9 @@ IFT2720_Laboratoire3_Collecte_Personnage/
 [SerializeField] private float bobSpeed;
 [SerializeField] private float bobHeight;
 
-// CameraRigController
+// Camera
 
-[SerializeField] private CameraRigController.CameraMode startMode;
+[SerializeField] private Camera.CameraMode startMode;
 [SerializeField] private bool lockCursorInThirdPerson;
 [SerializeField] private bool unlockCursorInBirdsEye;
 [SerializeField] private Transform target;
@@ -252,7 +253,7 @@ IFT2720_Laboratoire3_Collecte_Personnage/
 [SerializeField] private float birdsEyeOrthoLerpSpeed;
 [SerializeField] private float birdsEyeMinOrthographicSize;
 
-// GameManager
+// UI
 
 [SerializeField] private TextMeshProUGUI coinsText;
 [SerializeField] private TextMeshProUGUI treasuresText;
@@ -314,7 +315,7 @@ IFT2720_Laboratoire3_Collecte_Personnage/
 - ✓ Attribution de points selon le type d'objet
 - ✓ Animations visuelles des collectibles (rotation, flottement)
 
-✅ **GameManager et Architecture**
+✅ **UI et Architecture**
 
 - ✓ Pattern Singleton correctement implémenté
 - ✓ Gestion centralisée du score global

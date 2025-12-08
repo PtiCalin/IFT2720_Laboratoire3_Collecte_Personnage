@@ -103,7 +103,7 @@ Ensuite, créez une Pull Request sur GitHub en utilisant notre template.
 
 ```csharp
 // Classes: PascalCase
-public class PlayerController { }
+public class Player { }
 
 // Méthodes: PascalCase
 private void HandleMovement() { }
@@ -214,7 +214,7 @@ fix(collectible): Corrige animation de rotation qui saute
 
 docs(readme): Met à jour instructions d'installation
 
-refactor(gamemanager): Simplifie logique de score
+refactor(ui): Simplifie logique de score
 
 perf(physics): Optimise détection de collision
 

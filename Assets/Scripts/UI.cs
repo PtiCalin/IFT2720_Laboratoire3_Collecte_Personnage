@@ -1,9 +1,9 @@
 using UnityEngine;
 using TMPro;
 
-public class GameManager : MonoBehaviour
+public class UI : MonoBehaviour
 {
-    public static GameManager Instance { get; private set; }
+    public static UI Instance { get; private set; }
 
     [Header("UI References")]
     [SerializeField] private TextMeshProUGUI coinsText;
@@ -16,7 +16,6 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
-        // Implement singleton pattern
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -27,7 +26,6 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        // Initialize UI display
         UpdateUI();
     }
 
@@ -50,11 +48,9 @@ public class GameManager : MonoBehaviour
 
     private void UpdateUI()
     {
-        // Update coin counter
         if (coinsText != null)
             coinsText.text = $"Coins: {coinCount}";
 
-        // Update treasure counter
         if (treasuresText != null)
             treasuresText.text = $"Treasures: {treasureCount}";
 

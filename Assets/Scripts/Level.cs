@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class LevelGenerator : MonoBehaviour
+public class Level : MonoBehaviour
 {
     [Header("Sol")]
     [SerializeField] private Vector3 groundScale = new Vector3(5, 1, 5);
@@ -41,7 +41,7 @@ public class LevelGenerator : MonoBehaviour
 
     private enum MazeDirection { North = 0, South, East, West }
 
-    void Start()
+    private void Start()
     {
         levelParent = new GameObject("Generated Level");
         CreateGround();
@@ -78,13 +78,13 @@ public class LevelGenerator : MonoBehaviour
         ReserveCell(exitCell.x, exitCell.y);
 
         // Configure camera bounds
-        var cameraRig = FindFirstObjectByType<CameraRigController>(FindObjectsInactive.Include);
+        var cameraRig = FindFirstObjectByType<Camera>(FindObjectsInactive.Include);
         if (cameraRig != null)
         {
             Vector3 center = GetCellCenter(rows / 2, columns / 2);
             cameraRig.SetCenter(center);
             cameraRig.ConfigureBounds(columns * spacing, rows * spacing);
-            if (cameraRig.CurrentMode == CameraRigController.CameraMode.BirdsEye)
+            if (cameraRig.CurrentMode == Camera.CameraMode.BirdsEye)
                 cameraRig.SnapToCenter();
         }
     }
@@ -217,7 +217,6 @@ public class LevelGenerator : MonoBehaviour
 
     private void CreatePlayer()
     {
-        // Instantiate or create player object
         GameObject player = playerPrefab != null 
             ? Instantiate(playerPrefab, Vector3.zero, Quaternion.identity, levelParent.transform)
             : new GameObject("Player");
@@ -226,7 +225,6 @@ public class LevelGenerator : MonoBehaviour
         Vector3 spawnPos = GetCellCenter(entranceCell.x, entranceCell.y);
         player.transform.SetParent(levelParent.transform);
 
-        // Setup physics
         Rigidbody rb = player.GetComponent<Rigidbody>() ?? player.AddComponent<Rigidbody>();
         rb.mass = 1f;
         rb.linearDamping = 0f;
@@ -234,14 +232,12 @@ public class LevelGenerator : MonoBehaviour
         rb.useGravity = true;
         rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
 
-        // Ensure collider
         Collider col = player.GetComponentInChildren<Collider>();
         if (col == null)
             player.AddComponent<CapsuleCollider>();
         else if (col.isTrigger)
             col.isTrigger = false;
 
-        // Position player on ground using collider height or fallback value
         float heightOffset = 1f;
         Collider groundedCollider = player.GetComponentInChildren<Collider>();
         if (groundedCollider != null)
@@ -250,23 +246,20 @@ public class LevelGenerator : MonoBehaviour
             heightOffset = b.extents.y + 0.05f;
         }
 
-            // Spawn at entrance cell center; lift to rest on ground
         spawnPos.y = Mathf.Max(playerStartPosition.y, heightOffset);
         player.transform.position = spawnPos;
 
         ReserveCell(entranceCell.x, entranceCell.y);
 
-        // Setup controller
-        PlayerController controller = player.GetComponent<PlayerController>() ?? player.AddComponent<PlayerController>();
+        Player controller = player.GetComponent<Player>() ?? player.AddComponent<Player>();
         controller.MaxSpeed = playerMoveSpeed;
         controller.JumpForce = playerJumpForce;
 
-        // Link camera
-        var cameraRig = FindFirstObjectByType<CameraRigController>(FindObjectsInactive.Include);
+        var cameraRig = FindFirstObjectByType<Camera>(FindObjectsInactive.Include);
         if (cameraRig != null)
         {
             cameraRig.SetTarget(player.transform);
-            if (cameraRig.CurrentMode == CameraRigController.CameraMode.ThirdPerson)
+            if (cameraRig.CurrentMode == Camera.CameraMode.ThirdPerson)
                 cameraRig.SnapToTarget();
         }
     }
@@ -278,7 +271,6 @@ public class LevelGenerator : MonoBehaviour
 
         EnsureSpawnCellPool();
 
-        // Spawn coins
         int coinPlaced = 0;
         int coinAttempts = 0;
         while (coinPlaced < numberOfCoins && coinAttempts < numberOfCoins * 4)
@@ -308,7 +300,6 @@ public class LevelGenerator : MonoBehaviour
             coinPlaced++;
         }
 
-        // Spawn treasures
         int treasurePlaced = 0;
         int treasureAttempts = 0;
         while (treasurePlaced < numberOfTreasures && treasureAttempts < numberOfTreasures * 4)

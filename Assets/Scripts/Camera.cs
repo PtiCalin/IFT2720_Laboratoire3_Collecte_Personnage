@@ -1,10 +1,11 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using CameraComponent = UnityEngine.Camera;
 
 /// <summary>
-/// Handles both third-person orbit and bird's-eye orthographic camera modes.
+/// Handles third-person orbit and bird's-eye orthographic camera modes (self-contained input).
 /// </summary>
-public class CameraRigController : MonoBehaviour
+public class Camera : MonoBehaviour
 {
     public enum CameraMode
     {
@@ -34,7 +35,7 @@ public class CameraRigController : MonoBehaviour
     [SerializeField] private float birdsEyeOrthoLerpSpeed = 6f;
     [SerializeField] private float birdsEyeMinOrthographicSize = 15f;
 
-    private Camera cachedCamera;
+    private CameraComponent cachedCamera;
     private CameraMode currentMode;
     private float yaw;
     private float pitch;
@@ -43,13 +44,14 @@ public class CameraRigController : MonoBehaviour
     private float boundsHalfX;
     private float boundsHalfZ;
     private bool hasBounds;
-    // Input actions consolidated here so the rig is self-contained
     private InputAction toggleAction;
     private InputAction lookAction;
 
+    public CameraMode CurrentMode => currentMode;
+
     private void Awake()
     {
-        cachedCamera = GetComponent<Camera>();
+        cachedCamera = GetComponent<CameraComponent>();
         birdsEyeCenter = Vector3.zero;
         if (cachedCamera != null && cachedCamera.orthographic)
         {
@@ -59,10 +61,10 @@ public class CameraRigController : MonoBehaviour
         {
             birdsEyeTargetOrthographicSize = birdsEyeMinOrthographicSize;
         }
-        // Build input actions inline (Tab to toggle, Mouse delta to look)
+
         toggleAction = new InputAction(type: InputActionType.Button, binding: "<Keyboard>/tab");
         lookAction = new InputAction(type: InputActionType.Value, binding: "<Mouse>/delta");
-        toggleAction.performed += ctx => ToggleCameraMode();
+        toggleAction.performed += _ => ToggleCameraMode();
     }
 
     private void Start()
@@ -78,11 +80,6 @@ public class CameraRigController : MonoBehaviour
         lookAction.Enable();
     }
 
-    private void Update()
-    {
-        // Camera toggle handled by Input System callback
-    }
-
     private void LateUpdate()
     {
         switch (currentMode)
@@ -95,8 +92,6 @@ public class CameraRigController : MonoBehaviour
                 break;
         }
     }
-
-    public CameraMode CurrentMode => currentMode;
 
     public void SetMode(CameraMode mode, bool instant = false)
     {
@@ -165,7 +160,7 @@ public class CameraRigController : MonoBehaviour
     {
         if (cachedCamera == null)
         {
-            cachedCamera = GetComponent<Camera>();
+            cachedCamera = GetComponent<CameraComponent>();
         }
 
         if (currentMode == CameraMode.ThirdPerson)

@@ -1,15 +1,16 @@
 using UnityEngine;
+using CameraComponent = UnityEngine.Camera;
 
 /// <summary>
-/// Initialise la scène 3D avec tous les éléments nécessaires au jeu
-/// S'exécute automatiquement au démarrage de la scène
+/// Initialise la scène 3D avec tous les éléments nécessaires au jeu.
+/// S'exécute automatiquement au démarrage de la scène.
 /// </summary>
-public class SceneSetup : MonoBehaviour
+public class Scene : MonoBehaviour
 {
     [Header("Paramètres de Configuration")]
     [SerializeField] private bool generateLevelOnStart = true;
     [SerializeField] private bool setupCamera = true;
-    [SerializeField] private bool setupGameManager = true;
+    [SerializeField] private bool setupUI = true;
     [SerializeField] private bool setupLighting = true;
 
     private void Start()
@@ -20,9 +21,6 @@ public class SceneSetup : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Configure complètement la scène
-    /// </summary>
     private void SetupScene()
     {
         if (setupLighting)
@@ -31,16 +29,12 @@ public class SceneSetup : MonoBehaviour
         if (setupCamera)
             SetupCamera();
 
-        if (setupGameManager)
-            SetupGameManager();
+        if (setupUI)
+            SetupUI();
     }
 
-    /// <summary>
-    /// Configure l'éclairage de la scène
-    /// </summary>
     private void SetupLighting()
     {
-        // Chercher ou créer une lumière directionnelle (soleil)
         Light directionalLight = FindFirstObjectByType<Light>();
 
         if (directionalLight == null)
@@ -51,48 +45,39 @@ public class SceneSetup : MonoBehaviour
             directionalLight.intensity = 1f;
             lightObj.transform.eulerAngles = new Vector3(50, -30, 0);
         }
-
     }
 
-    /// <summary>
-    /// Configure la caméra principale
-    /// </summary>
     private void SetupCamera()
     {
-        Camera mainCamera = Camera.main;
+        CameraComponent mainCamera = CameraComponent.main;
 
         if (mainCamera == null)
         {
             GameObject cameraObj = new GameObject("Main Camera");
-            mainCamera = cameraObj.AddComponent<Camera>();
+            mainCamera = cameraObj.AddComponent<CameraComponent>();
             cameraObj.AddComponent<AudioListener>();
         }
 
-        // Position, couleur et composant de caméra unifiée
         mainCamera.transform.position = new Vector3(0f, 20f, -15f);
         mainCamera.transform.eulerAngles = new Vector3(45f, 0f, 0f);
         mainCamera.backgroundColor = new Color(0.2f, 0.3f, 0.4f);
 
-        CameraRigController rig = mainCamera.GetComponent<CameraRigController>();
+        Camera rig = mainCamera.GetComponent<Camera>();
         if (rig == null)
         {
-            rig = mainCamera.gameObject.AddComponent<CameraRigController>();
+            rig = mainCamera.gameObject.AddComponent<Camera>();
         }
-        rig.SetMode(CameraRigController.CameraMode.ThirdPerson, true);
-
+        rig.SetMode(Camera.CameraMode.ThirdPerson, true);
     }
 
-    /// <summary>
-    /// Configure le GameManager s'il n'existe pas
-    /// </summary>
-    private void SetupGameManager()
+    private void SetupUI()
     {
-        GameManager gameManager = FindFirstObjectByType<GameManager>();
+        UI ui = FindFirstObjectByType<UI>();
 
-        if (gameManager == null)
+        if (ui == null)
         {
-            GameObject gmObj = new GameObject("GameManager");
-            gameManager = gmObj.AddComponent<GameManager>();
+            GameObject gmObj = new GameObject("UI");
+            gmObj.AddComponent<UI>();
         }
     }
 }

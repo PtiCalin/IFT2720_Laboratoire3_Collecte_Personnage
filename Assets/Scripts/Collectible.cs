@@ -74,10 +74,10 @@ public class Collectible : MonoBehaviour
         // Mark as collected
         isCollected = true;
 
-        // Add points to game manager
-        if (GameManager.Instance != null)
+        // Add points to UI/game state manager
+        if (UI.Instance != null)
         {
-            GameManager.Instance.AddPoints(pointsValue, isTreasure);
+            UI.Instance.AddPoints(pointsValue, isTreasure);
         }
 
         // Destroy the object
