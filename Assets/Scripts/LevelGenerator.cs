@@ -62,6 +62,9 @@ public class LevelGenerator : MonoBehaviour
     private float cachedMazeDepth;
     private bool[,] occupiedCells;
     private List<Vector2Int> availableSpawnCells;
+    private Vector2Int entranceCell;
+    private Vector2Int exitCell;
+    private bool hasEntranceAndExit;
 
     private enum MazeDirection
     {
@@ -123,7 +126,14 @@ public class LevelGenerator : MonoBehaviour
         cachedColumns = columns;
         cachedSpacing = spacing;
         mazeLayout = GenerateMazeLayout(rows, columns);
+        ConfigureEntranceAndExit(mazeLayout, rows, columns);
         BuildMazeGeometry(mazeParent, mazeLayout, rows, columns, spacing);
+
+        if (hasEntranceAndExit)
+        {
+            ReserveCell(entranceCell.x, entranceCell.y);
+            ReserveCell(exitCell.x, exitCell.y);
+        }
 
         cachedMazeWidth = columns * spacing;
         cachedMazeDepth = rows * spacing;
@@ -308,6 +318,24 @@ public class LevelGenerator : MonoBehaviour
         availableSpawnCells = null;
     }
 
+    private void ConfigureEntranceAndExit(bool[,,] layout, int rows, int columns)
+    {
+        hasEntranceAndExit = false;
+
+        if (layout == null || rows <= 0 || columns <= 0)
+        {
+            return;
+        }
+
+        entranceCell = new Vector2Int(0, 0);
+        exitCell = new Vector2Int(rows - 1, columns - 1);
+
+        layout[entranceCell.x, entranceCell.y, (int)MazeDirection.West] = false;
+        layout[exitCell.x, exitCell.y, (int)MazeDirection.East] = false;
+
+        hasEntranceAndExit = true;
+    }
+
     private Vector3 GetCellCenterPosition(int row, int column)
     {
         if (cachedSpacing <= 0f || cachedRows <= 0 || cachedColumns <= 0)
@@ -323,6 +351,25 @@ public class LevelGenerator : MonoBehaviour
         return new Vector3(x, 0f, z);
     }
 
+    private Vector2Int GetPlayerSpawnCell()
+    {
+        if (cachedRows <= 0 || cachedColumns <= 0)
+        {
+            return Vector2Int.zero;
+        }
+
+        if (hasEntranceAndExit)
+        {
+            int row = Mathf.Clamp(entranceCell.x, 0, cachedRows - 1);
+            int column = Mathf.Clamp(entranceCell.y, 0, cachedColumns - 1);
+            return new Vector2Int(row, column);
+        }
+
+        int fallbackColumn = Mathf.Clamp(playerStartCell.x, 0, Mathf.Max(cachedColumns - 1, 0));
+        int fallbackRow = Mathf.Clamp(playerStartCell.y, 0, Mathf.Max(cachedRows - 1, 0));
+        return new Vector2Int(fallbackRow, fallbackColumn);
+    }
+
     private Vector3 GetPlayerSpawnPosition()
     {
         if (mazeLayout == null || cachedRows <= 0 || cachedColumns <= 0)
@@ -330,9 +377,8 @@ public class LevelGenerator : MonoBehaviour
             return playerStartPosition;
         }
 
-        int column = Mathf.Clamp(playerStartCell.x, 0, cachedColumns - 1);
-        int row = Mathf.Clamp(playerStartCell.y, 0, cachedRows - 1);
-        Vector3 cellCenter = GetCellCenterPosition(row, column);
+        Vector2Int spawnCell = GetPlayerSpawnCell();
+        Vector3 cellCenter = GetCellCenterPosition(spawnCell.x, spawnCell.y);
         cellCenter.y = playerStartPosition.y;
         return cellCenter;
     }
@@ -363,9 +409,8 @@ public class LevelGenerator : MonoBehaviour
             player.transform.SetParent(levelParent.transform, true);
         }
 
-        int spawnColumn = Mathf.Clamp(playerStartCell.x, 0, cachedColumns - 1);
-        int spawnRow = Mathf.Clamp(playerStartCell.y, 0, cachedRows - 1);
-        ReserveCell(spawnRow, spawnColumn);
+        Vector2Int spawnCell = GetPlayerSpawnCell();
+        ReserveCell(spawnCell.x, spawnCell.y);
 
         // S'assurer qu'un Rigidbody est présent et configuré
         Rigidbody rb = player.GetComponent<Rigidbody>();
