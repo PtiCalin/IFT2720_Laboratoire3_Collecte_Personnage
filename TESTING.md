@@ -10,24 +10,24 @@ This document provides a complete step-by-step guide to set up and test the Coll
 ## Step-by-Step Setup Guide for Functional Testing
 
 ### 1. Ensure Input System Package is Active
-- Open Unity Editor
-- Go to **Edit > Project Settings > Player**
-- Under **Other Settings > Configuration**, set **Active Input Handling** to **"Input System Package (New)"**
-- If not installed, go to **Window > Package Manager**, search for "Input System", and install it
+- [x] Open Unity Editor
+- [x] Go to **Edit > Project Settings > Player**
+- [x] Under **Other Settings > Configuration**, set **Active Input Handling** to **"Input System Package (New)"**
+- [x] If not installed, go to **Window > Package Manager**, search for "Input System", and install it
 
 ### 2. Generate Input System C# Class (Important!)
-- In the **Project** window, find `Assets/InputSystem_Actions.inputactions`
-- Right-click it and select **"Generate C# Class"**
-- This creates `InputSystem_Actions.cs` in your Scripts folder (it should appear automatically)
-- This class allows PlayerController to read input from the configured actions
+- [x] In the **Project** window, find `Assets/InputSystem_Actions.inputactions`
+- [x] Right-click it and select **"Generate C# Class"**
+- [x] This creates `InputSystem_Actions.cs` in your Scripts folder (it should appear automatically)
+- [x] This class allows PlayerController to read input from the configured actions
 
 ### 3. Customize Input Bindings (Optional)
-- Double-click `Assets/InputSystem_Actions.inputactions` to open the Input Actions editor
-- Under **Player > Move**, you can see bindings (likely WASD and Arrow keys)
-- To change keys: Click on a binding, then modify the **Path** (e.g., change `<Keyboard>/w` to another key)
-- For jump: Under **Player > Attack**, modify bindings (default is Space)
-- Save the asset after changes
-- This allows full customization of controls without code changes
+- [x] Double-click `Assets/InputSystem_Actions.inputactions` to open the Input Actions editor
+- [x] Under **Player > Move**, you can see bindings (likely WASD and Arrow keys)
+- [x] To change keys: Click on a binding, then modify the **Path** (e.g., change `<Keyboard>/w` to another key)
+- [x] For jump: Under **Player > Attack**, modify bindings (default is Space)
+- [x] Save the asset after changes
+- [x] This allows full customization of controls without code changes
 
 ### 4. Set Up Scene Hierarchy
 Create a new scene or use an existing one. The LevelGenerator script will automatically create most elements, but you need to set up the core components.
