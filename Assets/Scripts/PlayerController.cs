@@ -5,8 +5,9 @@ public class PlayerController : MonoBehaviour
     [Header("Paramètres de Déplacement")]
     public float moveSpeed = 5f;
     public float jumpForce = 5f;
-        private Rigidbody rb;
-        private bool isGrounded;
+    private Rigidbody rb;
+    private bool isGrounded;
+    private Vector3 desiredHorizontalVelocity;
 
     void Start()
     {
@@ -15,12 +16,27 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        float move = Input.GetAxis("Horizontal") * moveSpeed;
-        transform.Translate(move * Time.deltaTime, 0, 0);
-        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+        float moveHorizontal = Input.GetAxisRaw("Horizontal");
+        float moveVertical = Input.GetAxisRaw("Vertical");
+
+        Vector3 input = new Vector3(moveHorizontal, 0f, moveVertical);
+        if (input.sqrMagnitude > 1f)
+        {
+            input.Normalize();
+        }
+        desiredHorizontalVelocity = input * moveSpeed;
+
+        if (Input.GetButtonDown("Jump") && isGrounded)
         {
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
         }
+    }
+
+    void FixedUpdate()
+    {
+        Vector3 currentVelocity = rb.velocity;
+        Vector3 velocity = new Vector3(desiredHorizontalVelocity.x, currentVelocity.y, desiredHorizontalVelocity.z);
+        rb.velocity = velocity;
     }
 
     void OnCollisionEnter(Collision collision)
