@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 /// <summary>
 /// Handles both third-person orbit and bird's-eye orthographic camera modes.
@@ -13,7 +14,6 @@ public class CameraRigController : MonoBehaviour
 
     [Header("Mode Settings")]
     [SerializeField] private CameraMode startMode = CameraMode.ThirdPerson;
-    [SerializeField] private KeyCode toggleKey = KeyCode.Tab;
     [SerializeField] private bool lockCursorInThirdPerson = true;
     [SerializeField] private bool unlockCursorInBirdsEye = true;
 
@@ -41,6 +41,7 @@ public class CameraRigController : MonoBehaviour
     private Vector3 birdsEyeCenter;
     private bool hasBirdsEyeCenter;
     private float birdsEyeTargetOrthographicSize;
+    private CameraInputActions camInput;
 
     private void Awake()
     {
@@ -55,6 +56,8 @@ public class CameraRigController : MonoBehaviour
         {
             birdsEyeTargetOrthographicSize = birdsEyeMinOrthographicSize;
         }
+        camInput = new CameraInputActions();
+        camInput.Camera.Toggle.performed += ctx => ToggleCameraMode();
     }
 
     private void Start()
@@ -66,15 +69,12 @@ public class CameraRigController : MonoBehaviour
         pitch = ClampPitch(euler.x);
 
         SetMode(startMode, true);
+        camInput.Enable();
     }
 
     private void Update()
     {
-        if (Input.GetKeyDown(toggleKey))
-        {
-            CameraMode next = currentMode == CameraMode.ThirdPerson ? CameraMode.BirdsEye : CameraMode.ThirdPerson;
-            SetMode(next, false);
-        }
+        // Camera toggle handled by Input System callback
     }
 
     private void LateUpdate()
@@ -196,11 +196,9 @@ public class CameraRigController : MonoBehaviour
             return;
         }
 
-        float mouseX = Input.GetAxis("Mouse X");
-        float mouseY = Input.GetAxis("Mouse Y");
-
-        yaw += mouseX * rotationSpeed * Time.deltaTime;
-        pitch -= mouseY * rotationSpeed * verticalSensitivity * Time.deltaTime;
+        Vector2 mouseDelta = camInput.Camera.Look.ReadValue<Vector2>();
+        yaw += mouseDelta.x * rotationSpeed * Time.deltaTime;
+        pitch -= mouseDelta.y * rotationSpeed * verticalSensitivity * Time.deltaTime;
         pitch = ClampPitch(pitch);
 
         Quaternion desiredRotation = Quaternion.Euler(pitch, yaw, 0f);
@@ -256,5 +254,12 @@ public class CameraRigController : MonoBehaviour
     {
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+        camInput.Disable();
+    }
+
+    private void ToggleCameraMode()
+    {
+        CameraMode next = currentMode == CameraMode.ThirdPerson ? CameraMode.BirdsEye : CameraMode.ThirdPerson;
+        SetMode(next, false);
     }
 }
