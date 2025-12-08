@@ -7,7 +7,7 @@ Projet Unity 3D pour le cours IFT2720. Le générateur de niveau construit un la
 - Génération procédurale de labyrinthe uniques avec entrée et sortie uniques.
 - Joueur contrôlé par un `Rigidbody` simple (déplacements caméra-relatifs et saut).
 - Pièces et trésors animés qui attribuent des points au `GameManager`.
-- Caméra unique basculant entre orbite third-person et vue aérienne.
+- Caméra unique basculant entre orbite 3e personne et vue aérienne.
 - Matériaux recherchés automatiquement dans `Assets/Materials` (support Poliigon).
 
 ## Licence
