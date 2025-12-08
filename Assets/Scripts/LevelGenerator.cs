@@ -40,7 +40,7 @@ public class LevelGenerator : MonoBehaviour
     [SerializeField] private float wallHeight = 2f;
     [SerializeField] private float wallThickness = 0.5f;
     
-    [Header("Matériaux (Optionnel)")]
+    [Header("Matériaux et Textures")]
     [SerializeField] private Material wallMaterial;
     [SerializeField] private Material coinMaterial;
     [SerializeField] private Material treasureMaterial;
