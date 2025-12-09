@@ -24,9 +24,25 @@ public class LaunchSceneBuilder : MonoBehaviour
     private void Awake()
     {
         EnsureCamera();
+        EnsureEventSystem();
         var canvas = BuildCanvas();
         var background = BuildBackground(canvas);
         BuildButton(background.transform, buttonLabel, buttonSize, buttonOffset);
+    }
+
+    private void EnsureEventSystem()
+    {
+        // Required for UI clicks to be detected
+        if (FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>() != null)
+            return;
+
+        var go = new GameObject("EventSystem", typeof(UnityEngine.EventSystems.EventSystem));
+
+#if ENABLE_INPUT_SYSTEM
+        go.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
+#else
+        go.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
+#endif
     }
 
     private void EnsureCamera()
@@ -106,7 +122,8 @@ public class LaunchSceneBuilder : MonoBehaviour
         txtGO.transform.SetParent(btnGO.transform, false);
         var txt = txtGO.GetComponent<Text>();
         txt.text = label;
-        txt.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        txt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf")
+              ?? Font.CreateDynamicFontFromOSFont("Arial", 28);
         txt.fontSize = 28;
         txt.color = Color.white;
         txt.alignment = TextAnchor.MiddleCenter;

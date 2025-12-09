@@ -2,6 +2,8 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using CameraComponent = UnityEngine.Camera;
 
+namespace IFT2720
+{
 /// <summary>
 /// Handles third-person orbit and bird's-eye orthographic camera modes (self-contained input).
 /// </summary>
@@ -273,4 +275,5 @@ public class Camera : MonoBehaviour
         CameraMode next = currentMode == CameraMode.ThirdPerson ? CameraMode.BirdsEye : CameraMode.ThirdPerson;
         SetMode(next, false);
     }
+}
 }

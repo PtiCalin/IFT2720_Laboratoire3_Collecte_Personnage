@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using GameCamera = IFT2720.Camera;
 
 public class Level : MonoBehaviour
 {
@@ -78,13 +79,13 @@ public class Level : MonoBehaviour
         ReserveCell(exitCell.x, exitCell.y);
 
         // Configure camera bounds
-        var cameraRig = FindFirstObjectByType<Camera>(FindObjectsInactive.Include);
+        var cameraRig = FindFirstObjectByType<GameCamera>(FindObjectsInactive.Include);
         if (cameraRig != null)
         {
             Vector3 center = GetCellCenter(rows / 2, columns / 2);
             cameraRig.SetCenter(center);
             cameraRig.ConfigureBounds(columns * spacing, rows * spacing);
-            if (cameraRig.CurrentMode == Camera.CameraMode.BirdsEye)
+            if (cameraRig.CurrentMode == GameCamera.CameraMode.BirdsEye)
                 cameraRig.SnapToCenter();
         }
     }
@@ -271,11 +272,11 @@ public class Level : MonoBehaviour
         controller.MaxSpeed = playerMoveSpeed;
         controller.JumpForce = playerJumpForce;
 
-        var cameraRig = FindFirstObjectByType<Camera>(FindObjectsInactive.Include);
+        var cameraRig = FindFirstObjectByType<GameCamera>(FindObjectsInactive.Include);
         if (cameraRig != null)
         {
             cameraRig.SetTarget(player.transform);
-            if (cameraRig.CurrentMode == Camera.CameraMode.ThirdPerson)
+            if (cameraRig.CurrentMode == GameCamera.CameraMode.ThirdPerson)
                 cameraRig.SnapToTarget();
         }
     }

@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using UCamera = UnityEngine.Camera;
 
 /// <summary>
@@ -25,15 +26,34 @@ public class MainMenuUI : MonoBehaviour
     [SerializeField] private Color buttonTextColor = new Color32(0xAC, 0x96, 0x87, 0xFF); // #AC9687
     [SerializeField] private Color buttonFillColor = new Color(1f, 1f, 1f, 0f); // transparent
     [SerializeField] private bool showQuitButton = false;
+    [SerializeField] private string quitButtonLabel = "Quitter";
+    [SerializeField] private float quitButtonVerticalOffset = -140f;
 
     private UCamera menuCamera;
 
     private void Awake()
     {
         EnsureCamera();
+        EnsureEventSystem();
         var canvas = BuildCanvas();
         var bg = BuildBackground(canvas);
         BuildButton(bg.transform, buttonLabel, buttonSize, buttonPosition, buttonTextColor, buttonFillColor, OnStartClicked, "StartButton");
+
+        if (showQuitButton)
+        {
+            var quitPos = buttonPosition + new Vector2(0f, quitButtonVerticalOffset);
+            BuildButton(bg.transform, quitButtonLabel, buttonSize, quitPos, buttonTextColor, buttonFillColor, OnQuitClicked, "QuitButton");
+        }
+    }
+
+    private void EnsureEventSystem()
+    {
+        var evt = FindFirstObjectByType<EventSystem>();
+        if (evt == null)
+        {
+            var go = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
+            go.name = "EventSystem";
+        }
     }
 
     private void EnsureCamera()

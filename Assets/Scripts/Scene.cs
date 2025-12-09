@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using CameraComponent = UnityEngine.Camera;
+using GameCamera = IFT2720.Camera;
 
 /// <summary>
 /// Initialise la scène 3D avec tous les éléments nécessaires au jeu.
@@ -71,12 +72,12 @@ public class Scene : MonoBehaviour
         mainCamera.transform.eulerAngles = new Vector3(45f, 0f, 0f);
         mainCamera.backgroundColor = new Color(0.2f, 0.3f, 0.4f);
 
-        Camera rig = mainCamera.GetComponent<Camera>();
+        GameCamera rig = mainCamera.GetComponent<GameCamera>();
         if (rig == null)
         {
-            rig = mainCamera.gameObject.AddComponent<Camera>();
+            rig = mainCamera.gameObject.AddComponent<GameCamera>();
         }
-        rig.SetMode(Camera.CameraMode.ThirdPerson, true);
+        rig.SetMode(GameCamera.CameraMode.ThirdPerson, true);
     }
 
     private void SetupUI()
