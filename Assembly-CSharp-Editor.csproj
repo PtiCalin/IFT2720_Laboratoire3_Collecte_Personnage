@@ -48,7 +48,34 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.2.7f2\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Unity.VisualScripting.Generated\VisualScripting.Core\Property Providers\Editor\PropertyProvider_UnityEngine_Rendering_ShaderStrippingSetting.cs" />
+    <Compile Include="Assets\Unity.VisualScripting.Generated\VisualScripting.Core\Property Providers\Editor\PropertyProvider_UnityEngine_InputSystem_PlayerInput_DeviceLostEvent.cs" />
+    <Compile Include="Assets\Unity.VisualScripting.Generated\VisualScripting.Core\Property Providers\Editor\PropertyProvider_UnityEngine_Rendering_Universal_UniversalRendererResources.cs" />
+    <Compile Include="Assets\Unity.VisualScripting.Generated\VisualScripting.Core\Property Providers\Editor\PropertyProvider_UnityEditor_Rendering_RenderingLayersLimitSettings.cs" />
+    <Compile Include="Assets\Unity.VisualScripting.Generated\VisualScripting.Core\Property Providers\Editor\PropertyProvider_UnityEngine_InputSystem_InputActionMap.cs" />
+    <Compile Include="Assets\Unity.VisualScripting.Generated\VisualScripting.Core\Property Providers\Editor\PropertyProvider_UnityEngine_Rendering_VrsRenderPipelineRuntimeResources.cs" />
+    <Compile Include="Assets\Unity.VisualScripting.Generated\VisualScripting.Core\Property Providers\Editor\PropertyProvider_UnityEngine_InputSystem_PlayerInputManager_PlayerJoinedEvent.cs" />
+    <Compile Include="Assets\Unity.VisualScripting.Generated\VisualScripting.Core\Property Providers\Editor\PropertyProvider_UnityEngine_Rendering_Universal_ShadowShape2DProvider.cs" />
+    <Compile Include="Assets\Unity.VisualScripting.Generated\VisualScripting.Core\Property Providers\Editor\PropertyProvider_UnityEngine_Rendering_Universal_UniversalRenderPipelineRuntimeShaders.cs" />
     <Compile Include="Assets\Editor\PoliigonMaterialBuilder.cs" />
+    <Compile Include="Assets\Unity.VisualScripting.Generated\VisualScripting.Core\Property Providers\Editor\PropertyProvider_UnityEngine_Rendering_RenderGraphGlobalSettings.cs" />
+    <Compile Include="Assets\Unity.VisualScripting.Generated\VisualScripting.Core\Property Providers\Editor\PropertyProvider_UnityEngine_Rendering_VrsLut.cs" />
+    <Compile Include="Assets\Unity.VisualScripting.Generated\VisualScripting.Core\Property Providers\Editor\PropertyProvider_UnityEngine_Rendering_RenderPipelineGraphicsSettingsContainer.cs" />
+    <Compile Include="Assets\Unity.VisualScripting.Generated\VisualScripting.Core\Property Providers\Editor\PropertyProvider_UnityEngine_InputSystem_InputActionAsset.cs" />
+    <Compile Include="Assets\Unity.VisualScripting.Generated\VisualScripting.Core\Property Providers\Editor\PropertyProvider_UnityEngine_InputSystem_PlayerInput_ActionEvent.cs" />
+    <Compile Include="Assets\Unity.VisualScripting.Generated\VisualScripting.Core\Property Providers\Editor\PropertyProvider_UnityEngine_Rendering_Universal_StencilStateData.cs" />
+    <Compile Include="Assets\Unity.VisualScripting.Generated\VisualScripting.Core\Property Providers\Editor\PropertyProvider_UnityEngine_Rendering_IDefaultVolumeProfileSettings.cs" />
+    <Compile Include="Assets\Unity.VisualScripting.Generated\VisualScripting.Core\Property Providers\Editor\PropertyProvider_UnityEngine_InputSystem_PlayerInputManager_PlayerLeftEvent.cs" />
+    <Compile Include="Assets\Unity.VisualScripting.Generated\VisualScripting.Core\Property Providers\Editor\PropertyProvider_UnityEngine_Rendering_LightmapSamplingSettings.cs" />
+    <Compile Include="Assets\Unity.VisualScripting.Generated\VisualScripting.Core\Property Providers\Editor\PropertyProvider_UnityEngine_Rendering_IDefaultVolumeProfileAsset.cs" />
+    <Compile Include="Assets\Unity.VisualScripting.Generated\VisualScripting.Core\Property Providers\Editor\PropertyProvider_UnityEngine_InputSystem_InputActionProperty.cs" />
+    <Compile Include="Assets\Unity.VisualScripting.Generated\VisualScripting.Core\Property Providers\Editor\PropertyProvider_UnityEngine_InputSystem_PlayerInput_ControlsChangedEvent.cs" />
+    <Compile Include="Assets\Unity.VisualScripting.Generated\VisualScripting.Core\Property Providers\Editor\PropertyProvider_UnityEngine_InputSystem_InputAction.cs" />
+    <Compile Include="Assets\Unity.VisualScripting.Generated\VisualScripting.Core\Property Providers\Editor\PropertyProvider_UnityEngine_InputSystem_LowLevel_GamepadButton.cs" />
+    <Compile Include="Assets\Unity.VisualScripting.Generated\VisualScripting.Core\Property Providers\Editor\PropertyProvider_UnityEngine_Rendering_Universal_UniversalRenderPipelineDebugShaders.cs" />
+    <Compile Include="Assets\Unity.VisualScripting.Generated\VisualScripting.Core\Property Providers\Editor\PropertyProvider_UnityEngine_InputSystem_PlayerInput_DeviceRegainedEvent.cs" />
+    <Compile Include="Assets\Unity.VisualScripting.Generated\VisualScripting.Core\Property Providers\Editor\PropertyProvider_UnityEngine_InputSystem_InputActionReference.cs" />
+    <Compile Include="Assets\Unity.VisualScripting.Generated\VisualScripting.Core\Property Providers\Editor\PropertyProvider_UnityEngine_Rendering_IncludeAdditionalRPAssets.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
