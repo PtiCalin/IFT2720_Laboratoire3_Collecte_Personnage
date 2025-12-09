@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
-using GameCamera = IFT2720.Camera;
+using GameCamera = IFT2720.GameCamera;
 
 public class Level : MonoBehaviour
 {

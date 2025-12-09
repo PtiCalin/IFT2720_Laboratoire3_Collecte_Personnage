@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using CameraComponent = UnityEngine.Camera;
-using GameCamera = IFT2720.Camera;
+using GameCamera = IFT2720.GameCamera;
 
 /// <summary>
 /// Initialise la scène 3D avec tous les éléments nécessaires au jeu.
