@@ -14,7 +14,8 @@ public class MainMenuUI : MonoBehaviour
     [SerializeField] private string gameplaySceneName = "JeuCollecte";
 
     [Header("Background")]
-    [SerializeField] private string backgroundResourceName = "MainMenu"; // match attachment name
+    [SerializeField] private Sprite backgroundSprite; // optional: assign directly in Inspector
+    [SerializeField] private string backgroundResourceName = "LaunchMenuBackground"; // match attachment name
     [SerializeField] private Color fallbackBackgroundColor = new Color(0.05f, 0.05f, 0.07f, 1f);
 
     [Header("Button")]
@@ -73,7 +74,7 @@ public class MainMenuUI : MonoBehaviour
         bgGO.transform.SetParent(canvas.transform, false);
         var img = bgGO.GetComponent<Image>();
 
-        var sprite = Resources.Load<Sprite>(backgroundResourceName);
+        var sprite = backgroundSprite != null ? backgroundSprite : Resources.Load<Sprite>(backgroundResourceName);
         if (sprite != null)
         {
             img.sprite = sprite;
@@ -83,7 +84,7 @@ public class MainMenuUI : MonoBehaviour
         else
         {
             img.color = fallbackBackgroundColor;
-            Debug.LogWarning($"MainMenuUI: Sprite '{backgroundResourceName}' not found in Resources.");
+            Debug.LogWarning($"MainMenuUI: Sprite '{backgroundResourceName}' not found in Resources, and no sprite assigned.");
         }
 
         var rect = img.rectTransform;
