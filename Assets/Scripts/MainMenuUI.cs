@@ -131,13 +131,31 @@ public class MainMenuUI : MonoBehaviour
 
     private void OnStartClicked()
     {
-        if (!string.IsNullOrEmpty(gameplaySceneName))
+        if (string.IsNullOrEmpty(gameplaySceneName))
         {
-            SceneManager.LoadScene(gameplaySceneName, LoadSceneMode.Single);
+            Debug.LogError("MainMenuUI: gameplaySceneName not set.");
+            return;
+        }
+
+        // Subscribe once to trigger the Scene script after load
+        SceneManager.sceneLoaded += OnGameplaySceneLoaded;
+        SceneManager.LoadScene(gameplaySceneName, LoadSceneMode.Single);
+    }
+
+    private void OnGameplaySceneLoaded(UnityEngine.SceneManagement.Scene scene, LoadSceneMode mode)
+    {
+        // Unsubscribe immediately to avoid duplicate calls
+        SceneManager.sceneLoaded -= OnGameplaySceneLoaded;
+
+        // Find the Scene controller and trigger its setup explicitly
+        var controller = FindFirstObjectByType<Scene>();
+        if (controller != null)
+        {
+            controller.TriggerSetup();
         }
         else
         {
-            Debug.LogError("MainMenuUI: gameplaySceneName not set.");
+            Debug.LogWarning("MainMenuUI: Scene controller not found in loaded scene.");
         }
     }
 

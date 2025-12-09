@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using CameraComponent = UnityEngine.Camera;
 
 /// <summary>
@@ -19,6 +20,14 @@ public class Scene : MonoBehaviour
         {
             SetupScene();
         }
+    }
+
+    /// <summary>
+    /// Public entry-point to trigger scene setup manually (e.g., after load events).
+    /// </summary>
+    public void TriggerSetup()
+    {
+        SetupScene();
     }
 
     private void SetupScene()
